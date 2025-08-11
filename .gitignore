@@ -410,9 +410,59 @@ FodyWeavers.xsd
 # Built Visual Studio Code Extensions
 *.vsix
 
+DotNetBackEnd/.vs/
+
+
 # Windows Installer files from build outputs
 *.cab
 *.msi
 *.msix
 *.msm
 *.msp
+
+# Angular build output
+/dist/
+/out-tsc/
+/tmp/
+/coverage/
+/e2e/test-output/
+/.angular/
+
+# Node modules and lock files
+/node_modules/
+/package-lock.json
+/yarn.lock
+
+# Environment files
+/.env
+
+# Angular CLI and build artifacts
+/.angular-cli.json
+/.ng/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE and editor folders
+.idea/
+.vscode/
+*.swo
+*.swp
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Local history (VS Code extension)
+.history/
+
+# Misc
+*.log
+*.bak
+*.tmp
+
