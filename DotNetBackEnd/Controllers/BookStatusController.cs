@@ -19,15 +19,16 @@ namespace LibraryMgmt.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(200, Type = typeof(OperationalResult<ICollection<BookStatus>>))]
-        [ProducesResponseType(400, Type = typeof(OperationalResult<ICollection<BookStatus>>))]
-        [ProducesResponseType(404, Type = typeof(OperationalResult<ICollection<BookStatus>>))]
-        public IActionResult GetBookStatuses()
+       
+        [ProducesResponseType(200, Type = typeof(OperationalResult<ICollection<BookStatusDto>>))]
+        [ProducesResponseType(400, Type = typeof(OperationalResult<ICollection<BookStatusDto>>))]
+        [ProducesResponseType(404, Type = typeof(OperationalResult<ICollection<BookStatusDto>>))]
+        public async Task<IActionResult> GetBookStatuses()
         {
             if (!ModelState.IsValid)
                 return BadRequest(OperationalResult<ICollection<BookStatus>>.Error("Invalid model state.", ErrorCode.ValidationFailed));
 
-            var result = _bookStatusService.GetBookStatuses();
+            var result = await _bookStatusService.GetBookStatuses();
 
             if (!result.Success)
                 return NotFound(OperationalResult<ICollection<BookStatus>>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
@@ -36,15 +37,15 @@ namespace LibraryMgmt.Controllers
         }
 
         [HttpGet("{bookStatusId:int}")]
-        [ProducesResponseType(200, Type = typeof(OperationalResult<BookStatus>))]
-        [ProducesResponseType(400, Type = typeof(OperationalResult<BookStatus>))]
-        [ProducesResponseType(404, Type = typeof(OperationalResult<BookStatus>))]
-        public IActionResult GetBookStatusById(int bookStatusId)
+        [ProducesResponseType(200, Type = typeof(OperationalResult<BookStatusDto>))]
+        [ProducesResponseType(400, Type = typeof(OperationalResult<BookStatusDto>))]
+        [ProducesResponseType(404, Type = typeof(OperationalResult<BookStatusDto>))]
+        public async Task<IActionResult> GetBookStatusById(int bookStatusId)
         {
             if (!ModelState.IsValid)
                 return BadRequest(OperationalResult<BookStatus>.Error("Invalid model state.", ErrorCode.ValidationFailed));
 
-            var result = _bookStatusService.GetBookStatusById(bookStatusId);
+            var result = await _bookStatusService.GetBookStatusById(bookStatusId);
 
             if (!result.Success)
                 return NotFound(OperationalResult<BookStatus>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
@@ -56,12 +57,19 @@ namespace LibraryMgmt.Controllers
         [ProducesResponseType(200, Type = typeof(OperationalResult<string>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<string>))]
         [ProducesResponseType(500, Type = typeof(OperationalResult<string>))]
-        public IActionResult CheckoutBook(int bookId, int studentId)
+        public async Task<IActionResult> CheckoutBook(int bookId, int studentId)
         {
             try
             {
-                _bookStatusService.CheckoutBook(bookId, studentId);
-                return Ok(OperationalResult<string>.Ok("Checked out successfully"));
+                var result = await _bookStatusService.CheckoutBookAsync(bookId, studentId);
+                if (result.Success)
+                {
+                    return Ok(OperationalResult<string>.Ok("Checked out successfully"));
+                }
+                else
+                {
+                    return BadRequest(OperationalResult<string>.Error(result.Message, ErrorCode.ValidationFailed));
+                }
             }
             catch (SqlException ex) when (ex.Number == 2627 || ex.Number == 2601)
             {
@@ -87,9 +95,9 @@ namespace LibraryMgmt.Controllers
         [ProducesResponseType(500, Type = typeof(OperationalResult<BookReturnedDto>))]
 
 
-        public IActionResult ReturnBook(int id, [FromBody] JsonPatchDocument<BookStatus> patchDoc)
+        public async Task<IActionResult> ReturnBook(int id, [FromBody] JsonPatchDocument<BookStatus> patchDoc)
         {
-            var result = _bookStatusService.ReturnBook(id, patchDoc, ModelState);
+            var result = await _bookStatusService.ReturnBook(id, patchDoc, ModelState);
 
             if (!result.Success)
             {
@@ -107,9 +115,9 @@ namespace LibraryMgmt.Controllers
         [ProducesResponseType(400, Type = typeof(OperationalResult<BookReturnedDto>))]
         [ProducesResponseType(404, Type = typeof(OperationalResult<BookReturnedDto>))]
         [ProducesResponseType(500, Type = typeof(OperationalResult<BookReturnedDto>))]
-        public IActionResult ReturnBookByInt(int bookId)
+        public async Task<IActionResult> ReturnBookByInt(int bookId)
         {
-            var result = _bookStatusService.ReturnBookByInt(bookId);
+            var result = await _bookStatusService.ReturnBookByInt(bookId);
 
             if (!result.Success)
             {

@@ -4,12 +4,12 @@ namespace LibraryMgmt.Services.Interfaces
 {
     public interface IBookService
     {
-        OperationalResult<ICollection<BookDto>> GetBooks();
+        Task<OperationalResult<ICollection<BookDto>>> GetBooks();
 
-        OperationalResult<BookDto> GetBookById(int bookId);
+        Task<OperationalResult<BookDto>> GetBookById(int bookId);
 
-        OperationalResult<object> AddBook(BookDto book);
+        Task<OperationalResult<BookDto>> AddBook(BookDto book);
 
-        bool UpdateAmountOfBook(int bookId, int noOfBooks);
+        /*Task<bool> UpdateAmountOfBook(int bookId, int noOfBooks);*/
     }
 }

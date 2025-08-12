@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using LibraryMgmt.PatchExamples;
 using AutoMapper;
 using LibraryMgmt.DTOs;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Data;
+using Microsoft.Data.SqlClient;
 
 namespace LibraryMgmt.Services
 {
@@ -24,47 +27,96 @@ namespace LibraryMgmt.Services
             _mapper = mapper;
         }
 
-        public OperationalResult<ICollection<BookStatusDto>> GetBookStatuses()
+        public async Task<OperationalResult<ICollection<BookStatusDto>>> GetBookStatuses()
         {
-            var bookStatuses = _mapper.Map<ICollection<BookStatusDto>>(_bookStatusRepository.GetAll());
+            var bookStatuses = _mapper.Map<ICollection<BookStatusDto>>(await _bookStatusRepository.GetAllAsync());
 
             if (bookStatuses == null || bookStatuses.Count == 0)
                 return OperationalResult<ICollection<BookStatusDto>>.Error("No book statuses found.");
 
             return OperationalResult<ICollection<BookStatusDto>>.Ok(bookStatuses);
         }
-        public OperationalResult<BookStatusDto> GetBookStatusById(int bookStatusId)
+
+        public async Task<OperationalResult<BookStatusDto>> GetBookStatusById(int bookStatusId)
         {
-            var bookStatus = _mapper.Map<BookStatusDto>(_bookStatusRepository.GetBookStatusById(bookStatusId));
+            var bookStatus = _mapper.Map<BookStatusDto>(await _bookStatusRepository.GetBookStatusById(bookStatusId));
 
             if (bookStatus == null)
                 return OperationalResult<BookStatusDto>.Error("No book status found.");
 
             return OperationalResult<BookStatusDto>.Ok(bookStatus);
         }
-        public void CheckoutBook(int bookId, int studentId)
+        public async Task<OperationalResult<bool>> CheckoutBookAsync(int bookId, int studentId)
         {
-            var checkoutDate = DateTime.Now;
+            var checkoutDate = DateTime.UtcNow;
 
-            _context.Database.ExecuteSqlInterpolated(
-                $"EXEC CheckoutBook {bookId}, {studentId}, {checkoutDate}");
+            await using var connection = _context.Database.GetDbConnection();
+            await connection.OpenAsync();
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = "CheckoutBook";
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(new SqlParameter("@book_id", SqlDbType.Int) { Value = bookId });
+            command.Parameters.Add(new SqlParameter("@student_id", SqlDbType.Int) { Value = studentId });
+            command.Parameters.Add(new SqlParameter("@date_checkout", SqlDbType.DateTime) { Value = checkoutDate });
+
+            var returnParam = new SqlParameter
+            {
+                Direction = ParameterDirection.ReturnValue,
+                SqlDbType = SqlDbType.Int
+            };
+            command.Parameters.Add(returnParam);
+
+            try
+            {
+                await command.ExecuteNonQueryAsync();
+
+                var result = (int)returnParam.Value;
+
+                if (result == 1)
+                {
+                    return OperationalResult<bool>.Ok(true);
+                }
+                else
+                {
+                    return OperationalResult<bool>.Error("No copies available.");
+                }
+            }
+            catch (SqlException ex)
+            {
+                switch (ex.Number)
+                {
+                    case 50001:
+                        return OperationalResult<bool>.Error("No available copies of this book.", ErrorCode.ValidationFailed);
+
+                    case 50002:
+                        return OperationalResult<bool>.Error("This student already has this book checked out.", ErrorCode.ValidationFailed);
+
+                    default:
+                        return OperationalResult<bool>.Error("Database error: " + ex.Message, ErrorCode.SaveFailed);
+                }
+            }
         }
 
-        public OperationalResult<BookReturnedDto> ReturnBook(int id, JsonPatchDocument<BookStatus> patchDoc, ModelStateDictionary modelState)
+        public async Task<OperationalResult<BookReturnedDto>> ReturnBook(int id, JsonPatchDocument<BookStatus> patchDoc, ModelStateDictionary modelState)
         {
-            var bookStatus = _bookStatusRepository.GetBookStatusById(id);
+            var bookStatus = await _bookStatusRepository.GetBookStatusById(id);
             if (bookStatus == null)
                 return OperationalResult<BookReturnedDto>.Error("Book not found.");
 
             if (patchDoc == null)
                 return OperationalResult<BookReturnedDto>.Error("Invalid patch document.");
 
-            PatchHelper.TryApplyPatch(patchDoc, bookStatus, modelState);
+            if (bookStatus.DateReturned.HasValue)
+                return OperationalResult<BookReturnedDto>.Error("This book has already been returned.", ErrorCode.ValidationFailed);
+
+            PatchHelper.TryApplyPatch<BookStatus>(patchDoc, bookStatus, modelState);
 
             if (!modelState.IsValid)
                 return OperationalResult<BookReturnedDto>.Error("Patch validation failed.");
 
-            var saved = _bookStatusRepository.Save();
+            var saved = await _bookStatusRepository.SaveAsync();
 
             var dto = new BookReturnedDto
             {
@@ -80,9 +132,9 @@ namespace LibraryMgmt.Services
             return OperationalResult<BookReturnedDto>.Ok(dto);
         }
 
-        public OperationalResult<BookReturnedDto> ReturnBookByInt(int bookId)
+        public async Task<OperationalResult<BookReturnedDto>> ReturnBookByInt(int bookId)
         {
-            var bookStatus = _bookStatusRepository.GetBookStatusById(bookId);
+            var bookStatus = await _bookStatusRepository.GetBookStatusById(bookId);
 
             
             if (bookStatus == null)
@@ -101,7 +153,7 @@ namespace LibraryMgmt.Services
                 DateReturned = bookStatus.DateReturned ?? DateTime.MinValue
             };
 
-            if (!_bookStatusRepository.Save())
+            if (!await _bookStatusRepository.SaveAsync())
                 return OperationalResult<BookReturnedDto>.Error("Something went wrong returning the book.", ErrorCode.SaveFailed);
 
             return OperationalResult<BookReturnedDto>.Ok(dto);

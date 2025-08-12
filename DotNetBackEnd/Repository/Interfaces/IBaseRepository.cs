@@ -2,8 +2,8 @@
 {
     public interface IRepository<T> where T : class
     {
-        ICollection<T> GetAll();
+        Task<ICollection<T>> GetAllAsync();
      
-        bool Save();
+        Task<bool> SaveAsync();
     }
 }
