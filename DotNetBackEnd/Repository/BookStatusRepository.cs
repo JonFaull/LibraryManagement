@@ -4,6 +4,7 @@ using LibraryMgmt.Data;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using LibraryMgmt.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.CompilerServices;
 
 namespace LibraryMgmt.Repository
 {
@@ -16,35 +17,35 @@ namespace LibraryMgmt.Repository
             _context = context;
         }
 
-        public ICollection<BookStatus> GetBookStatuses()
+        public async Task<ICollection<BookStatus>> GetBookStatuses()
         {
-            return _context.BookStatuses.ToList();
+            return await _context.BookStatuses.ToListAsync();
         }
 
-        public BookStatus GetBookStatusById(int bookStatusId)
+        public async Task<BookStatus> GetBookStatusById(int bookStatusId)
         {
-            return _context.BookStatuses
+            return await _context.BookStatuses
                 .Include(bs => bs.Book)
                 .Include(bs => bs.Student)
-                .FirstOrDefault(bs => bs.BookStatusId == bookStatusId);
+                .FirstOrDefaultAsync(bs => bs.BookStatusId == bookStatusId);
 
         }
 
-        public bool BookStatusExists(int bookStatusId)
+        public async Task<bool> BookStatusExists(int bookStatusId)
         {
-            return _context.BookStatuses.Any(bs => bs.BookStatusId == bookStatusId);
+            return await _context.BookStatuses.AnyAsync(bs => bs.BookStatusId == bookStatusId);
         }
 
-        public void CheckoutBook(int bookId, int studentId)
-        {
-
-        }
-
-        public bool ReturnBook(BookStatus bookStatus)
+        public async Task<bool> ReturnBook(BookStatus bookStatus)
         {
             bookStatus.DateReturned = DateTime.Now;
-            _context.BookStatuses.Update(bookStatus);
-            return Save();
+            var returned = _context.BookStatuses.Update(bookStatus);
+
+            if (returned == null)
+            {
+                return false;
+            }
+            return await SaveAsync();
         }
     }
 }

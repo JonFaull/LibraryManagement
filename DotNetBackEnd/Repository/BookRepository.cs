@@ -3,6 +3,7 @@ using LibraryMgmt.Models;
 using LibraryMgmt.Repository.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibraryMgmt.Repository
 {
@@ -15,19 +16,19 @@ namespace LibraryMgmt.Repository
             _context = context;
         }
 
-        public Book GetBookById(int bookId)
+        public async Task<Book> GetBookById(int bookId)
         {
-            return _context.Books.FirstOrDefault(bs => bs.BookId == bookId);
+            return await _context.Books.FirstOrDefaultAsync(bs => bs.BookId == bookId);
         }
 
-        public Book GetBookByIsbn(string isbn)
+        public async Task<Book> GetBookByIsbn(string isbn)
         {
-            return _context.Books.FirstOrDefault(bs => bs.Isbn == isbn);
+            return await _context.Books.FirstOrDefaultAsync(bs => bs.Isbn == isbn);
         }
 
-        public bool UpdateNoBooks(int bookId, int noCopies)
+        public async Task<bool> UpdateNoBooks(int bookId, int noCopies)
         {
-            var book = _context.Books.FirstOrDefault(bs => bs.BookId == bookId);
+            var book = await _context.Books.FirstOrDefaultAsync(bs => bs.BookId == bookId);
 
             if(book == null)
             {
@@ -36,19 +37,24 @@ namespace LibraryMgmt.Repository
 
             book.NoCopies = book.NoCopies + noCopies;
 
-            return Save();
+            return await SaveAsync();
         }
 
-        public bool BookExists(string isbn)
+        public async Task<bool> BookExists(string isbn)
         {
             return _context.Books.Any(b => b.Isbn == isbn);
         }
 
-        public bool AddBook(Book book)
+        public async Task<Book> AddBook(Book book)
         {
             _context.Books.Add(book);
 
-            return Save();
+            var success = await SaveAsync();
+            if (!success)
+            {
+                return null; 
+            }
+            return await GetBookByIsbn(book.Isbn);
         }
     }
 }

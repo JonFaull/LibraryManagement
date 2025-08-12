@@ -7,11 +7,11 @@ namespace LibraryMgmt.Services.Interfaces
 {
     public interface IBookStatusService
     {
-        OperationalResult<ICollection<BookStatusDto>> GetBookStatuses();
-        OperationalResult<BookStatusDto> GetBookStatusById(int bookStatusId);
-        void CheckoutBook(int bookId, int studentId);
-        OperationalResult<BookReturnedDto> ReturnBook(int id, JsonPatchDocument<BookStatus> patchDoc, ModelStateDictionary modelState);
+        Task<OperationalResult<ICollection<BookStatusDto>>> GetBookStatuses();
+        Task<OperationalResult<BookStatusDto>> GetBookStatusById(int bookStatusId);
+        Task<OperationalResult<bool>> CheckoutBookAsync(int bookId, int studentId);
+        Task<OperationalResult<BookReturnedDto>> ReturnBook(int id, JsonPatchDocument<BookStatus> patchDoc, ModelStateDictionary modelState);
 
-        OperationalResult<BookReturnedDto> ReturnBookByInt(int bookId);
+        Task<OperationalResult<BookReturnedDto>> ReturnBookByInt(int bookId);
     }
 }

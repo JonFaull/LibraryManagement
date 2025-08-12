@@ -22,12 +22,12 @@ namespace LibraryMgmt.Controllers
         [ProducesResponseType(404, Type = typeof(OperationalResult<ICollection<BookDto>>))]
 
 
-        public IActionResult GetBooks()
+        public async Task<IActionResult?> GetBooks()
         {
             if (!ModelState.IsValid)
                 return BadRequest(OperationalResult<ICollection<BookDto>>.Error("Invalid model state.", ErrorCode.ValidationFailed));
 
-            var result = _bookService.GetBooks();
+            var result = await _bookService.GetBooks();
 
             if (!result.Success)
                 return NotFound(OperationalResult<ICollection<BookDto>>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
@@ -39,12 +39,12 @@ namespace LibraryMgmt.Controllers
         [ProducesResponseType(200, Type = typeof(OperationalResult<BookDto>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<BookDto>))]
         [ProducesResponseType(404, Type = typeof(OperationalResult<BookDto>))]
-        public IActionResult GetBookStatusById(int bookId)
+        public async Task<IActionResult> GetBookStatusById(int bookId)
         {
             if (!ModelState.IsValid)
                 return BadRequest(OperationalResult<Book>.Error("Invalid model state.", ErrorCode.ValidationFailed));
 
-            var result = _bookService.GetBookById(bookId);
+            var result = await _bookService.GetBookById(bookId);
 
             if (!result.Success)
                 return NotFound(OperationalResult<Book>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
@@ -53,14 +53,14 @@ namespace LibraryMgmt.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddBook([FromBody] BookDto newBook)
+        public async Task<IActionResult> AddBook([FromBody] BookDto newBook)
         {
             if(newBook == null)
             {
                 return BadRequest(OperationalResult<BookDto>.Error("Book data is required", ErrorCode.ValidationFailed));
             }
 
-            var result = _bookService.AddBook(newBook);
+            var result = await _bookService.AddBook(newBook);
 
             if (!result.Success)
                 return NotFound(OperationalResult<BookDto>.Error(result.Message, result.Code ?? ErrorCode.NotFound));

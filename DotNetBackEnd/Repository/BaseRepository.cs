@@ -1,5 +1,6 @@
 ﻿using LibraryMgmt.Repository.Interfaces;
 using LibraryMgmt.Data;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace LibraryMgmt.Repository
@@ -13,14 +14,14 @@ namespace LibraryMgmt.Repository
             _context = context;
         }
 
-        public virtual ICollection<T> GetAll()
+        public virtual async Task<ICollection<T>> GetAllAsync()
         {
-            return _context.Set<T>().ToList();
+            return await _context.Set<T>().ToListAsync();
         }
 
-        public virtual bool Save()
+        public async virtual Task<bool> SaveAsync()
         {
-            var saved = _context.SaveChanges();
+            var saved = await _context.SaveChangesAsync();
             return saved > 0 ? true : false;
         }
     }

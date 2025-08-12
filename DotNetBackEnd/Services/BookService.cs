@@ -20,9 +20,9 @@ namespace LibraryMgmt.Services
             _mapper = mapper;
         }
 
-        public OperationalResult<ICollection<BookDto>> GetBooks()
+        public async Task<OperationalResult<ICollection<BookDto>>> GetBooks()
         {
-            var books = _mapper.Map<List<BookDto>>(_bookRepository.GetAll());
+            var books = _mapper.Map<List<BookDto>>(await _bookRepository.GetAllAsync());
 
             if (books == null || books.Count == 0)
                 return OperationalResult<ICollection<BookDto>>.Error("No books found.");
@@ -30,9 +30,9 @@ namespace LibraryMgmt.Services
             return OperationalResult<ICollection<BookDto>>.Ok(books);
         }
 
-        public OperationalResult<BookDto> GetBookById(int bookId)
+        public async Task<OperationalResult<BookDto>> GetBookById(int bookId)
         {
-            var book = _mapper.Map<BookDto>(_bookRepository.GetBookById(bookId)); 
+            var book = _mapper.Map<BookDto>(await _bookRepository.GetBookById(bookId)); 
 
             if (book == null)
                 return OperationalResult<BookDto>.Error("No book found with the given ID.");
@@ -40,32 +40,29 @@ namespace LibraryMgmt.Services
             return OperationalResult<BookDto>.Ok(book);
         }
 
-        public OperationalResult<object> AddBook(BookDto book)
+        public async Task<OperationalResult<BookDto>> AddBook(BookDto bookDto)
         {
-            var existingBook = _bookRepository.GetBookByIsbn(book.Isbn);
+            var existingBook = await _bookRepository.GetBookByIsbn(bookDto.Isbn);
 
             if (existingBook != null)
             {
-                var updateSuccess = _bookRepository.UpdateNoBooks(existingBook.BookId, book.NoCopies);
+                var updateSuccess = await _bookRepository.UpdateNoBooks(existingBook.BookId, bookDto.NoCopies);
 
                 if (updateSuccess)
-                    return OperationalResult<object>.Ok("Book updated successfully.");
-                else
-                    return OperationalResult<object>.Error("Failed to update existing book.", ErrorCode.SaveFailed);
+                {
+                    var updatedBook = await _bookRepository.GetBookByIsbn(bookDto.Isbn);
+                    return OperationalResult<BookDto>.Ok(_mapper.Map<BookDto>(updatedBook));
+                }
+
+                return OperationalResult<BookDto>.Error("Failed to update existing book.", ErrorCode.SaveFailed);
             }
 
-            var addSuccess = _bookRepository.AddBook(_mapper.Map<Book>(book));
+            var addedBook = await _bookRepository.AddBook(_mapper.Map<Book>(bookDto));
 
-            if (addSuccess)
-                return OperationalResult<object>.Ok("Book added successfully.");
+            if (addedBook != null)
+                return OperationalResult<BookDto>.Ok(_mapper.Map<BookDto>(addedBook));
             else
-                return OperationalResult<object>.Error("Failed to add new book.", ErrorCode.SaveFailed);
-        }
-
-
-        public bool UpdateAmountOfBook(int bookId, int noOfBooks)
-        {
-            return false;
+                return OperationalResult<BookDto>.Error("Failed to add new book.", ErrorCode.SaveFailed);
         }
     }
 }
