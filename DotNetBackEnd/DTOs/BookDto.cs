@@ -6,6 +6,7 @@ namespace LibraryMgmt.DTOs
 {
     public class BookDto
     {
+        public int BookId { get; set; }
         [Required(ErrorMessage = "Title is required.")]
         public String Title { get; set; }
         [Required(ErrorMessage = "Author is required.")]

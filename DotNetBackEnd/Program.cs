@@ -45,7 +45,8 @@ builder.Services.AddScoped<IBookStatusRepository, BookStatusRepository>();
 builder.Services.AddScoped<IBookStatusService, BookStatusService>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<IBookService, BookService>();
-
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<IStudentService, StudentService>();
 
 var app = builder.Build();
 

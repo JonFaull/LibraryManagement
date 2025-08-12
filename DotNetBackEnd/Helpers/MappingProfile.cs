@@ -13,6 +13,8 @@ namespace LibraryMgmt.Helpers
             CreateMap<BookStatus, BookStatusDto>();
             CreateMap<BookStatusDto, BookStatus>();
             CreateMap<BookStatus, BookReturnedDto>();
+            CreateMap<StudentDto, Student>();
+            CreateMap<Student, StudentDto>();
         }
     }
 }
