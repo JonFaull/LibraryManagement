@@ -3,6 +3,7 @@ using LibraryMgmt.Data;
 
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using LibraryMgmt.Repository.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibraryMgmt.Repository
 {
@@ -22,8 +23,11 @@ namespace LibraryMgmt.Repository
 
         public BookStatus GetBookStatusById(int bookStatusId)
         {
-            return _context.BookStatuses.FirstOrDefault(bs => bs.BookStatusId == bookStatusId);
-                
+            return _context.BookStatuses
+                .Include(bs => bs.Book)
+                .Include(bs => bs.Student)
+                .FirstOrDefault(bs => bs.BookStatusId == bookStatusId);
+
         }
 
         public bool BookStatusExists(int bookStatusId)
@@ -42,11 +46,5 @@ namespace LibraryMgmt.Repository
             _context.BookStatuses.Update(bookStatus);
             return Save();
         }
-
-        /*public bool Save()
-        {
-            var saved = _context.SaveChanges();
-            return saved > 0 ? true : false;
-        }*/
     }
 }

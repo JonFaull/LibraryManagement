@@ -1,14 +1,14 @@
-﻿using LibraryMgmt.Models;
+﻿using LibraryMgmt.DTOs;
 
 namespace LibraryMgmt.Services.Interfaces
 {
     public interface IBookService
     {
-        OperationalResult<ICollection<Book>> GetBooks();
+        OperationalResult<ICollection<BookDto>> GetBooks();
 
-        OperationalResult<Book> GetBookById(int bookId);
+        OperationalResult<BookDto> GetBookById(int bookId);
 
-        OperationalResult<object> AddBook(Book book);
+        OperationalResult<object> AddBook(BookDto book);
 
         bool UpdateAmountOfBook(int bookId, int noOfBooks);
     }

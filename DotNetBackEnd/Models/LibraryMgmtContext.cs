@@ -74,10 +74,12 @@ public partial class LibraryMgmtContext : DbContext
 
             entity.HasOne(d => d.Book).WithMany(p => p.BookStatuses)
                 .HasForeignKey(d => d.BookId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__book_stat__book___4D94879B");
 
             entity.HasOne(d => d.Student).WithMany(p => p.BookStatuses)
                 .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__book_stat__stude__4E88ABD4");
         });
 

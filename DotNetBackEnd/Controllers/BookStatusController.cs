@@ -3,8 +3,8 @@ using LibraryMgmt.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.JsonPatch;
 using Swashbuckle.AspNetCore.Filters;
-using LibraryMgmt.Repository.Interfaces;
 using LibraryMgmt.Services.Interfaces;
+using LibraryMgmt.DTOs;
 
 namespace LibraryMgmt.Controllers
 {
@@ -81,10 +81,10 @@ namespace LibraryMgmt.Controllers
         [HttpPatch("{id}")]
         [Consumes("application/json-patch+json")]
         [SwaggerRequestExample(typeof(JsonPatchDocument<BookStatus>), typeof(JsonPatchExampleFilter))]
-        [ProducesResponseType(200, Type = typeof(OperationalResult<string>))]
-        [ProducesResponseType(400, Type = typeof(OperationalResult<string>))]
-        [ProducesResponseType(404, Type = typeof(OperationalResult<string>))]
-        [ProducesResponseType(500, Type = typeof(OperationalResult<string>))]
+        [ProducesResponseType(200, Type = typeof(OperationalResult<BookReturnedDto>))]
+        [ProducesResponseType(400, Type = typeof(OperationalResult<BookReturnedDto>))]
+        [ProducesResponseType(404, Type = typeof(OperationalResult<BookReturnedDto>))]
+        [ProducesResponseType(500, Type = typeof(OperationalResult<BookReturnedDto>))]
 
 
         public IActionResult ReturnBook(int id, [FromBody] JsonPatchDocument<BookStatus> patchDoc)
@@ -99,14 +99,14 @@ namespace LibraryMgmt.Controllers
                 return BadRequest(OperationalResult<string>.Error(result.Message));
             }
 
-            return Ok(OperationalResult<object>.Ok());
+            return Ok(result);
         }
 
         [HttpPatch("{bookId}")]
-        [ProducesResponseType(200, Type = typeof(OperationalResult<string>))]
-        [ProducesResponseType(400, Type = typeof(OperationalResult<string>))]
-        [ProducesResponseType(404, Type = typeof(OperationalResult<string>))]
-        [ProducesResponseType(500, Type = typeof(OperationalResult<string>))]
+        [ProducesResponseType(200, Type = typeof(OperationalResult<BookReturnedDto>))]
+        [ProducesResponseType(400, Type = typeof(OperationalResult<BookReturnedDto>))]
+        [ProducesResponseType(404, Type = typeof(OperationalResult<BookReturnedDto>))]
+        [ProducesResponseType(500, Type = typeof(OperationalResult<BookReturnedDto>))]
         public IActionResult ReturnBookByInt(int bookId)
         {
             var result = _bookStatusService.ReturnBookByInt(bookId);
@@ -122,7 +122,7 @@ namespace LibraryMgmt.Controllers
                 };
             }
 
-            return Ok(OperationalResult<object>.Ok());
+            return Ok(result);
         }
     }
 }

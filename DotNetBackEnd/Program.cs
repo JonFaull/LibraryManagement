@@ -6,6 +6,10 @@ using LibraryMgmt.Helpers;
 using LibraryMgmt.Repository.Interfaces;
 using LibraryMgmt.Services.Interfaces;
 using LibraryMgmt.Services;
+using LibraryMgmt.DTOs;
+using Microsoft.Extensions.DependencyInjection;
+using AutoMapper;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +31,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.OperationFilter<JsonPatchExampleFilter>();
+    options.SchemaFilter<SwaggerDefaultValues>();
 });
+
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
+
+
+
 
 
 builder.Services.AddScoped<IBookStatusRepository, BookStatusRepository>();

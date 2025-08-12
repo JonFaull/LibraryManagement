@@ -1,11 +1,7 @@
-﻿using LibraryMgmt.Data;
-using LibraryMgmt.Repository;
-using LibraryMgmt.Repository.Interfaces;
-using LibraryMgmt.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
+﻿using LibraryMgmt.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using LibraryMgmt.Models;
-using LibraryMgmt.Services;
+using LibraryMgmt.DTOs;
 
 namespace LibraryMgmt.Controllers
 {
@@ -21,27 +17,28 @@ namespace LibraryMgmt.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(200, Type = typeof(OperationalResult<ICollection<Book>>))]
-        [ProducesResponseType(400, Type = typeof(OperationalResult<ICollection<Book>>))]
-        [ProducesResponseType(404, Type = typeof(OperationalResult<ICollection<Book>>))]
+        [ProducesResponseType(200, Type = typeof(OperationalResult<ICollection<BookDto>>))]
+        [ProducesResponseType(400, Type = typeof(OperationalResult<ICollection<BookDto>>))]
+        [ProducesResponseType(404, Type = typeof(OperationalResult<ICollection<BookDto>>))]
+
 
         public IActionResult GetBooks()
         {
             if (!ModelState.IsValid)
-                return BadRequest(OperationalResult<ICollection<Book>>.Error("Invalid model state.", ErrorCode.ValidationFailed));
+                return BadRequest(OperationalResult<ICollection<BookDto>>.Error("Invalid model state.", ErrorCode.ValidationFailed));
 
             var result = _bookService.GetBooks();
 
             if (!result.Success)
-                return NotFound(OperationalResult<ICollection<Book>>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
+                return NotFound(OperationalResult<ICollection<BookDto>>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
 
             return Ok(result);
         }
 
         [HttpGet("{bookId:int}")]
-        [ProducesResponseType(200, Type = typeof(OperationalResult<Book>))]
-        [ProducesResponseType(400, Type = typeof(OperationalResult<Book>))]
-        [ProducesResponseType(404, Type = typeof(OperationalResult<Book>))]
+        [ProducesResponseType(200, Type = typeof(OperationalResult<BookDto>))]
+        [ProducesResponseType(400, Type = typeof(OperationalResult<BookDto>))]
+        [ProducesResponseType(404, Type = typeof(OperationalResult<BookDto>))]
         public IActionResult GetBookStatusById(int bookId)
         {
             if (!ModelState.IsValid)
@@ -56,17 +53,17 @@ namespace LibraryMgmt.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddBook([FromBody] Book newBook)
+        public IActionResult AddBook([FromBody] BookDto newBook)
         {
             if(newBook == null)
             {
-                return BadRequest(OperationalResult<Book>.Error("Book data is required", ErrorCode.ValidationFailed));
+                return BadRequest(OperationalResult<BookDto>.Error("Book data is required", ErrorCode.ValidationFailed));
             }
 
             var result = _bookService.AddBook(newBook);
 
             if (!result.Success)
-                return NotFound(OperationalResult<Book>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
+                return NotFound(OperationalResult<BookDto>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
 
             return Ok(result);
         }

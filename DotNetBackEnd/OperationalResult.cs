@@ -27,6 +27,9 @@
         public static OperationalResult<T> Ok(T data = default)
             => new OperationalResult<T>(true, "Operation completed successfully.", data);
 
+        
+
+
         public static OperationalResult<T> Error(string message, ErrorCode code = ErrorCode.Unknown)
             => new OperationalResult<T>(false, message, default, code);
 

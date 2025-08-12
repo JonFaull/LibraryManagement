@@ -1,14 +1,13 @@
 ﻿using LibraryMgmt.Services.Interfaces;
 using LibraryMgmt.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Runtime.CompilerServices;
 using LibraryMgmt.Data;
 using LibraryMgmt.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc;
 using LibraryMgmt.PatchExamples;
-using System.Net;
+using AutoMapper;
+using LibraryMgmt.DTOs;
 
 namespace LibraryMgmt.Services
 {
@@ -16,31 +15,32 @@ namespace LibraryMgmt.Services
     {
         private readonly IBookStatusRepository _bookStatusRepository;
         private readonly DataContext _context;
+        private readonly IMapper _mapper;
 
-        public BookStatusService(IBookStatusRepository bookSatusRepository, DataContext context)
+        public BookStatusService(IBookStatusRepository bookSatusRepository, DataContext context, IMapper mapper)
         {
             _bookStatusRepository = bookSatusRepository;
             _context = context;
+            _mapper = mapper;
         }
 
-        public OperationalResult<ICollection<BookStatus>> GetBookStatuses()
+        public OperationalResult<ICollection<BookStatusDto>> GetBookStatuses()
         {
-            var bookStatuses = _bookStatusRepository.GetAll();
+            var bookStatuses = _mapper.Map<ICollection<BookStatusDto>>(_bookStatusRepository.GetAll());
 
             if (bookStatuses == null || bookStatuses.Count == 0)
-                return OperationalResult<ICollection<BookStatus>>.Error("No book statuses found.");
+                return OperationalResult<ICollection<BookStatusDto>>.Error("No book statuses found.");
 
-            return OperationalResult<ICollection<BookStatus>>.Ok(bookStatuses);
+            return OperationalResult<ICollection<BookStatusDto>>.Ok(bookStatuses);
         }
-
-        public OperationalResult<BookStatus> GetBookStatusById(int bookStatusId)
+        public OperationalResult<BookStatusDto> GetBookStatusById(int bookStatusId)
         {
-            var bookStatus = _bookStatusRepository.GetBookStatusById(bookStatusId);
+            var bookStatus = _mapper.Map<BookStatusDto>(_bookStatusRepository.GetBookStatusById(bookStatusId));
 
             if (bookStatus == null)
-                return OperationalResult<BookStatus>.Error("No book status found.");
+                return OperationalResult<BookStatusDto>.Error("No book status found.");
 
-            return OperationalResult<BookStatus>.Ok(bookStatus);
+            return OperationalResult<BookStatusDto>.Ok(bookStatus);
         }
         public void CheckoutBook(int bookId, int studentId)
         {
@@ -50,42 +50,70 @@ namespace LibraryMgmt.Services
                 $"EXEC CheckoutBook {bookId}, {studentId}, {checkoutDate}");
         }
 
-        public OperationalResult<object> ReturnBook(int id, JsonPatchDocument<BookStatus> patchDoc, ModelStateDictionary modelState)
+        public OperationalResult<BookReturnedDto> ReturnBook(int id, JsonPatchDocument<BookStatus> patchDoc, ModelStateDictionary modelState)
         {
             var bookStatus = _bookStatusRepository.GetBookStatusById(id);
             if (bookStatus == null)
-                return OperationalResult<object>.Error("Book not found.");
+                return OperationalResult<BookReturnedDto>.Error("Book not found.");
 
             if (patchDoc == null)
-                return OperationalResult<object>.Error("Invalid patch document.");
+                return OperationalResult<BookReturnedDto>.Error("Invalid patch document.");
 
             PatchHelper.TryApplyPatch(patchDoc, bookStatus, modelState);
 
             if (!modelState.IsValid)
-                return OperationalResult<object>.Error("Patch validation failed.");
+                return OperationalResult<BookReturnedDto>.Error("Patch validation failed.");
 
             var saved = _bookStatusRepository.Save();
-            if (!saved)
-                return OperationalResult<object>.Error("Failed to save changes.");
 
-            return OperationalResult<object>.Ok("Book returned successfully :)");
+            var dto = new BookReturnedDto
+            {
+                BookId = bookStatus.BookId,
+                Title = bookStatus.Book?.Title ?? "Unknown",
+                StudentName = $"{bookStatus.Student?.FirstName ?? "Unknown"} {bookStatus.Student?.LastName ?? ""}".Trim(),
+                DateReturned = bookStatus.DateReturned ?? DateTime.MinValue
+            };
+
+            if (!saved)
+                return OperationalResult<BookReturnedDto>.Error("Failed to save changes.");
+
+            return OperationalResult<BookReturnedDto>.Ok(dto);
         }
 
-        public OperationalResult<object> ReturnBookByInt(int bookId)
+        public OperationalResult<BookReturnedDto> ReturnBookByInt(int bookId)
         {
             var bookStatus = _bookStatusRepository.GetBookStatusById(bookId);
+
+            
             if (bookStatus == null)
-                return OperationalResult<object>.Error("No matching checkout found", ErrorCode.NotFound);
+                return OperationalResult<BookReturnedDto>.Error("No matching checkout found", ErrorCode.NotFound);
 
             if (bookStatus.DateReturned.HasValue)
-                return OperationalResult<object>.Error("This book has already been returned.", ErrorCode.ValidationFailed);
+                return OperationalResult<BookReturnedDto>.Error("This book has already been returned.", ErrorCode.ValidationFailed);
 
-            bookStatus.DateReturned = DateTime.Today;
+            bookStatus.DateReturned = DateTime.UtcNow;
+
+            var dto = new BookReturnedDto
+            {
+                BookId = bookStatus.BookId,
+                Title = bookStatus.Book?.Title ?? "Unknown",
+                StudentName = $"{bookStatus.Student?.FirstName ?? "Unknown"} {bookStatus.Student?.LastName ?? ""}".Trim(),
+                DateReturned = bookStatus.DateReturned ?? DateTime.MinValue
+            };
 
             if (!_bookStatusRepository.Save())
-                return OperationalResult<object>.Error("Something went wrong returning the book.", ErrorCode.SaveFailed);
+                return OperationalResult<BookReturnedDto>.Error("Something went wrong returning the book.", ErrorCode.SaveFailed);
 
-            return OperationalResult<object>.Ok($"Book returned successfully on {DateTime.Today:yyyy-MM-dd}");
+            return OperationalResult<BookReturnedDto>.Ok(dto);
+        }
+
+        private int GeBookStatusBy(int studentId, int bookId)
+        {
+            var bookStatus = _context.BookStatuses
+                .Where(bs => bs.StudentId == studentId && bs.BookId == bookId && bs.DateReturned == null).FirstOrDefault();
+
+            return bookStatus.BookStatusId;
+
         }
     }
 }
