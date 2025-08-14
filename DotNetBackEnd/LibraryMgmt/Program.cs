@@ -9,6 +9,7 @@ using LibraryMgmt.Services;
 using LibraryMgmt.DTOs;
 using Microsoft.Extensions.DependencyInjection;
 using AutoMapper;
+using Microsoft.Extensions.Configuration;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,12 +22,17 @@ builder.Services.AddControllers(options =>
 {
     options.InputFormatters.Insert(0, MyJPIF.GetJsonPatchInputFormatter());
 });
- 
+
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
+/*builder.Services.AddDbContext<DataContext>(options =>
+    options.UseSqlServer("DefaultConnection"));*/
+
 builder.Services.AddDbContext<DataContext>(options =>
-    options.UseSqlServer("DefaultConnection"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

@@ -24,12 +24,12 @@ namespace LibraryMgmt.Controllers
         [ProducesResponseType(404, Type = typeof(OperationalResult<ICollection<StudentDto>>))]
 
 
-        public IActionResult GetStudents()
+        public async Task<IActionResult> GetStudents()
         {
             if (!ModelState.IsValid)
                 return BadRequest(OperationalResult<ICollection<StudentDto>>.Error("Invalid model state.", ErrorCode.ValidationFailed));
 
-            var result = _studentService.GetStudents();
+            var result = await _studentService.GetStudents();
 
             if (!result.Success)
                 return NotFound(OperationalResult<ICollection<StudentDto>>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
@@ -39,17 +39,33 @@ namespace LibraryMgmt.Controllers
 
         [HttpGet("{studentId:int}")]
         [ProducesResponseType(200, Type = typeof(OperationalResult<StudentDto>))]
-        [ProducesResponseType(400, Type = typeof(OperationalResult<BookDto>))]
-        [ProducesResponseType(404, Type = typeof(OperationalResult<BookDto>))]
-        public IActionResult GetStudentById(int studentId)
+        [ProducesResponseType(400, Type = typeof(OperationalResult<StudentDto>))]
+        [ProducesResponseType(404, Type = typeof(OperationalResult<StudentDto>))]
+        public async Task<IActionResult> GetStudentById(int studentId)
         {
             if (!ModelState.IsValid)
-                return BadRequest(OperationalResult<Student>.Error("Invalid model state.", ErrorCode.ValidationFailed));
+                return BadRequest(OperationalResult<StudentDto>.Error("Invalid model state.", ErrorCode.ValidationFailed));
 
-            var result = _studentService.GetStudentById(studentId);
+            var result = await _studentService.GetStudentById(studentId);
 
             if (!result.Success)
-                return NotFound(OperationalResult<Student>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
+                return NotFound(OperationalResult<StudentDto>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
+
+            return Ok(result);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddStudent([FromBody] CreateStudentDto newStudent)
+        {
+            if (newStudent == null)
+            {
+                return BadRequest(OperationalResult<StudentDto>.Error("Student data is required", ErrorCode.ValidationFailed));
+            }
+
+            var result = await _studentService.AddStudent(newStudent);
+
+            if (!result.Success)
+                return NotFound(OperationalResult<StudentDto>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
 
             return Ok(result);
         }
