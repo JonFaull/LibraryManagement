@@ -14,8 +14,20 @@ using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
+/*builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddUserSecrets<Program>(optional: true)
+    .AddEnvironmentVariables();*/
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+
+
+//var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
+
+
+
 // Add services to the container.
 
 builder.Services.AddControllers(options =>
@@ -23,14 +35,21 @@ builder.Services.AddControllers(options =>
     options.InputFormatters.Insert(0, MyJPIF.GetJsonPatchInputFormatter());
 });
 
-
+builder.Services.AddDbContext<DataContext>(options =>
+    options.UseSqlServer(connectionString));
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
 /*builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer("DefaultConnection"));*/
-
 builder.Services.AddDbContext<DataContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
+
+/*builder.Services.AddDbContext<DataContext>(options =>
+    options.UseSqlServer(connectionString));*/
+
+
+/*builder.Services.AddDbContext<DataContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));*/
 
 
 builder.Services.AddEndpointsApiExplorer();

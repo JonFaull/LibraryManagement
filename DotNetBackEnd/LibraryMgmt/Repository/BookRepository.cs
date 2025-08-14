@@ -1,19 +1,14 @@
 ﻿using LibraryMgmt.Data;
 using LibraryMgmt.Models;
 using LibraryMgmt.Repository.Interfaces;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryMgmt.Repository
 {
     public class BookRepository : BaseRepository<Book>, IBookRepository
     {
-        private readonly DataContext _context;
-
         public BookRepository(DataContext context) : base(context) 
         {
-            _context = context;
         }
 
         public async Task<Book> GetBookById(int bookId)
@@ -42,7 +37,7 @@ namespace LibraryMgmt.Repository
 
         public async Task<bool> BookExists(string isbn)
         {
-            return _context.Books.Any(b => b.Isbn == isbn);
+            return await _context.Books.AnyAsync(b => b.Isbn == isbn);
         }
 
         public async Task<Book> AddBook(Book book)

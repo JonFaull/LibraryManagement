@@ -1,20 +1,14 @@
 ﻿using LibraryMgmt.Models;
 using LibraryMgmt.Data;
-
-using Microsoft.EntityFrameworkCore.Query.Internal;
 using LibraryMgmt.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Runtime.CompilerServices;
 
 namespace LibraryMgmt.Repository
 {
     public class BookStatusRepository : BaseRepository<BookStatus>, IBookStatusRepository
     {
-        private readonly DataContext _context;
-
         public BookStatusRepository(DataContext context): base(context)
         {
-            _context = context;
         }
 
         public async Task<ICollection<BookStatus>> GetBookStatuses()

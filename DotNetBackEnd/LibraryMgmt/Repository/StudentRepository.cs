@@ -7,10 +7,8 @@ namespace LibraryMgmt.Repository
 {
     public class StudentRepository : BaseRepository<Student>, IStudentRepository
     {
-        private readonly DataContext _context;
         public StudentRepository(DataContext context) : base(context)
         {
-            _context = context;
         }
 
         public async Task<Student> GetStudentById(int studentId)
