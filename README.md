@@ -1,6 +1,6 @@
 # 📚 Library Management API
 
-A RESTful Web API built with ASP.NET Core using **Entity Framework Core scaffolding** to generate models from an existing SQL Server database. Currently working on improvements to JWT authentication to better increase security and align more with industry standards. To do: add angular front end. 
+A RESTful Web API built with ASP.NET Core using **Entity Framework Core scaffolding** to generate models from an existing SQL Server database. Currently working on improvements to JWT authentication to better increase security and align more with industry standards. To do: add Student related service, controller and repositories add angular front end. 
 
 ## 🚀 Technologies Used
 
