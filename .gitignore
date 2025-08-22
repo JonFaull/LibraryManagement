@@ -466,3 +466,4 @@ Thumbs.db
 *.bak
 *.tmp
 
+/DotNetBackEnd/LibraryMgmt/appsettings.json
