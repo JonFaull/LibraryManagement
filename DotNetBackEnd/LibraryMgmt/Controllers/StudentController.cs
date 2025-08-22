@@ -18,7 +18,7 @@ namespace LibraryMgmt.Controllers
             _studentService = studentService;
         }
 
-        [HttpGet]
+        [HttpGet("GetStudents")]
         [ProducesResponseType(typeof(OperationalResult<ICollection<StudentDto>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(OperationalResult<ICollection<StudentDto>>), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<OperationalResult<ICollection<StudentDto>>>> GetStudents()
@@ -31,7 +31,7 @@ namespace LibraryMgmt.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{studentId:int}")]
+        [HttpGet("GetStudentsById{studentId:int}")]
         [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<OperationalResult<StudentDto>>> GetStudentById(int studentId)
@@ -45,7 +45,7 @@ namespace LibraryMgmt.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpPost]
+        [HttpPost("AddStudent")]
         [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<OperationalResult<StudentDto>>> AddStudent([FromBody] CreateStudentDto newStudent)

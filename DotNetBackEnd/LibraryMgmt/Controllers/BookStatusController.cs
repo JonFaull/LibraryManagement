@@ -23,7 +23,7 @@ namespace LibraryMgmt.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpGet]
+        [HttpGet("GetBookStatuses")]
         [ProducesResponseType(200, Type = typeof(OperationalResult<ICollection<BookStatusDto>>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<ICollection<BookStatusDto>>))]
         [ProducesResponseType(404, Type = typeof(OperationalResult<ICollection<BookStatusDto>>))]
@@ -53,7 +53,7 @@ namespace LibraryMgmt.Controllers
         }
 
         [Authorize(Roles = "Admin,User")]
-        [HttpPost]
+        [HttpPost("CheckoutBook")]
         [ProducesResponseType(200, Type = typeof(OperationalResult<string>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<string>))]
         [ProducesResponseType(500, Type = typeof(OperationalResult<string>))]
@@ -88,7 +88,7 @@ namespace LibraryMgmt.Controllers
 
         //Return book method 1: JsonPatchDocument.
         [Authorize(Roles = "Admin,User")]
-        [HttpPatch("{id}")]
+        [HttpPatch("ReturnBook{id}")]
         [Consumes("application/json-patch+json")]
         [SwaggerRequestExample(typeof(JsonPatchDocument<BookStatus>), typeof(JsonPatchExampleFilter))]
         [ProducesResponseType(200, Type = typeof(OperationalResult<BookReturnedDto>))]
@@ -113,7 +113,7 @@ namespace LibraryMgmt.Controllers
 
         //Return book method 2: Update all.
         [Authorize]
-        [HttpPatch("{bookId}")]
+        [HttpPatch("ReturnBook{bookId}")]
         [ProducesResponseType(200, Type = typeof(OperationalResult<BookReturnedDto>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<BookReturnedDto>))]
         [ProducesResponseType(404, Type = typeof(OperationalResult<BookReturnedDto>))]

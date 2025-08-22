@@ -20,7 +20,7 @@ namespace LibraryMgmt.Controllers
         }
 
         [Authorize(Roles = "Admin,User")]
-        [HttpGet]
+        [HttpGet("GetBooks")]
         [ProducesResponseType(200, Type = typeof(OperationalResult<ICollection<BookDto>>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<ICollection<BookDto>>))]
         [ProducesResponseType(404, Type = typeof(OperationalResult<ICollection<BookDto>>))]
@@ -36,7 +36,7 @@ namespace LibraryMgmt.Controllers
         }
 
         [Authorize(Roles = "Admin,User")]
-        [HttpGet("{bookId:int}")]
+        [HttpGet("GetBookById{bookId:int}")]
         [ProducesResponseType(200, Type = typeof(OperationalResult<BookDto>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<BookDto>))]
         [ProducesResponseType(404, Type = typeof(OperationalResult<BookDto>))]
@@ -51,7 +51,7 @@ namespace LibraryMgmt.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpPost]
+        [HttpPost("AddBook")]
         [ProducesResponseType(200, Type = typeof(OperationalResult<AddBookDto>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<AddBookDto>))]
         [ProducesResponseType(404, Type = typeof(OperationalResult<AddBookDto>))]
