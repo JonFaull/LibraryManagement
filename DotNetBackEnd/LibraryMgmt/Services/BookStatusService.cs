@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using LibraryMgmt.PatchExamples;
 using AutoMapper;
 using LibraryMgmt.DTOs;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Data;
 using Microsoft.Data.SqlClient;
 
@@ -132,13 +131,15 @@ namespace LibraryMgmt.Services
             return OperationalResult<BookReturnedDto>.Ok(dto);
         }
 
-        public async Task<OperationalResult<BookReturnedDto>> ReturnBookByInt(int bookId)
+        public async Task<OperationalResult<BookReturnedDto>> ReturnBookByInt(int bookId, string? userEmail)
         {
             var bookStatus = await _bookStatusRepository.GetBookStatusById(bookId);
-
             
             if (bookStatus == null)
                 return OperationalResult<BookReturnedDto>.Error("No matching checkout found", ErrorCode.NotFound);
+
+            if(bookStatus.Student?.EmailAddress != userEmail)
+                return OperationalResult<BookReturnedDto>.Error("This book is not checked out by the current user.", ErrorCode.ValidationFailed);
 
             if (bookStatus.DateReturned.HasValue)
                 return OperationalResult<BookReturnedDto>.Error("This book has already been returned.", ErrorCode.ValidationFailed);

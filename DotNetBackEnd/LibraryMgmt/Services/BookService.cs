@@ -40,7 +40,7 @@ namespace LibraryMgmt.Services
             return OperationalResult<BookDto>.Ok(book);
         }
 
-        public async Task<OperationalResult<BookDto>> AddBook(BookDto bookDto)
+        public async Task<OperationalResult<BookDto>> AddBook(AddBookDto bookDto)
         {
             var existingBook = await _bookRepository.GetBookByIsbn(bookDto.Isbn);
 

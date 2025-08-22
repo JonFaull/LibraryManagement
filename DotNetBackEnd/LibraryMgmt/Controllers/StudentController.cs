@@ -1,12 +1,11 @@
 ﻿using LibraryMgmt.DTOs;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using LibraryMgmt.Services.Interfaces;
-using LibraryMgmt.Models;
-using LibraryMgmt.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LibraryMgmt.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class StudentController : ControllerBase
@@ -18,12 +17,12 @@ namespace LibraryMgmt.Controllers
             _studentService = studentService;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         [ProducesResponseType(200, Type = typeof(OperationalResult<ICollection<StudentDto>>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<ICollection<StudentDto>>))]
         [ProducesResponseType(404, Type = typeof(OperationalResult<ICollection<StudentDto>>))]
-
-
+        
         public async Task<IActionResult> GetStudents()
         {
             if (!ModelState.IsValid)
@@ -37,6 +36,7 @@ namespace LibraryMgmt.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin,User")]
         [HttpGet("{studentId:int}")]
         [ProducesResponseType(200, Type = typeof(OperationalResult<StudentDto>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<StudentDto>))]
@@ -53,7 +53,7 @@ namespace LibraryMgmt.Controllers
 
             return Ok(result);
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> AddStudent([FromBody] CreateStudentDto newStudent)
         {

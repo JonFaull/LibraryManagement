@@ -1,11 +1,10 @@
-﻿using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
 
 namespace LibraryMgmt.DTOs
 {
-    public class BookDto
+    public class AddBookDto
     {
-        public int BookId { get; set; }
         [Required(ErrorMessage = "Title is required.")]
         public String Title { get; set; }
         [Required(ErrorMessage = "Author is required.")]

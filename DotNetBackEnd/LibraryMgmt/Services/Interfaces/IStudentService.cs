@@ -9,8 +9,5 @@ namespace LibraryMgmt.Services.Interfaces
         Task<OperationalResult<StudentDto>> GetStudentById(int studentId);
 
         Task<OperationalResult<StudentDto>> AddStudent(CreateStudentDto student);
-
-       
-       /* OperationalResult<StudentDto> UpdateStudent(int studentId, StudentDto student);*/
     }
 }

@@ -16,6 +16,7 @@ namespace LibraryMgmt.Helpers
             CreateMap<StudentDto, Student>();
             CreateMap<Student, StudentDto>();
             CreateMap<CreateStudentDto, Student>();
+            CreateMap<AddBookDto, Book>();
         }
     }
 }

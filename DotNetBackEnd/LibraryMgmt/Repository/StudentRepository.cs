@@ -10,7 +10,6 @@ namespace LibraryMgmt.Repository
         public StudentRepository(DataContext context) : base(context)
         {
         }
-
         public async Task<Student> GetStudentById(int studentId)
         {
             return await _context.Students.FirstOrDefaultAsync(sd => sd.StudentId == studentId);
@@ -21,15 +20,10 @@ namespace LibraryMgmt.Repository
             return await _context.Students.AnyAsync(s => s.EmailAddress == email);
         }
 
-        public async Task<Student> AddStudent(Student student)
+        public async Task<Student?> AddStudent(Student student)
         {
             _context.Students.Add(student);
-            var success = await SaveAsync();
-            if (!success)
-            {
-                return null;
-            }
-            return student;
+            return await SaveAsync() ? student : null;
         }
     }
 }

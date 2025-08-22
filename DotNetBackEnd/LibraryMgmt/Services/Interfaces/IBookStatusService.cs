@@ -11,7 +11,6 @@ namespace LibraryMgmt.Services.Interfaces
         Task<OperationalResult<BookStatusDto>> GetBookStatusById(int bookStatusId);
         Task<OperationalResult<bool>> CheckoutBookAsync(int bookId, int studentId);
         Task<OperationalResult<BookReturnedDto>> ReturnBook(int id, JsonPatchDocument<BookStatus> patchDoc, ModelStateDictionary modelState);
-
-        Task<OperationalResult<BookReturnedDto>> ReturnBookByInt(int bookId);
+        Task<OperationalResult<BookReturnedDto>> ReturnBookByInt(int bookId, string? userEmail);
     }
 }

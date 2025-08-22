@@ -2,9 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using LibraryMgmt.Models;
 using LibraryMgmt.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LibraryMgmt.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class BookController : ControllerBase
@@ -16,11 +18,11 @@ namespace LibraryMgmt.Controllers
             _bookService = bookService;
         }
 
+        [Authorize(Roles = "Admin,User")]
         [HttpGet]
         [ProducesResponseType(200, Type = typeof(OperationalResult<ICollection<BookDto>>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<ICollection<BookDto>>))]
         [ProducesResponseType(404, Type = typeof(OperationalResult<ICollection<BookDto>>))]
-
 
         public async Task<IActionResult?> GetBooks()
         {
@@ -35,6 +37,7 @@ namespace LibraryMgmt.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin,User")]
         [HttpGet("{bookId:int}")]
         [ProducesResponseType(200, Type = typeof(OperationalResult<BookDto>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<BookDto>))]
@@ -52,18 +55,19 @@ namespace LibraryMgmt.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
-        public async Task<IActionResult> AddBook([FromBody] BookDto newBook)
+        public async Task<IActionResult> AddBook([FromBody] AddBookDto newBook)
         {
             if(newBook == null)
             {
-                return BadRequest(OperationalResult<BookDto>.Error("Book data is required", ErrorCode.ValidationFailed));
+                return BadRequest(OperationalResult<AddBookDto>.Error("Book data is required", ErrorCode.ValidationFailed));
             }
 
             var result = await _bookService.AddBook(newBook);
 
             if (!result.Success)
-                return NotFound(OperationalResult<BookDto>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
+                return NotFound(OperationalResult<AddBookDto>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
 
             return Ok(result);
         }
