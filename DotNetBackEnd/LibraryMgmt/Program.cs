@@ -12,6 +12,9 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
 
 var key = Convert.FromBase64String("ZMBEC+Sf2DqbvJxydvn4bspc2sFNvPHe8d2L8205lLU=");

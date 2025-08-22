@@ -6,9 +6,10 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace LibraryMgmt.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,User")]
     [Route("api/[controller]")]
     [ApiController]
+    [Produces("application/json")]
     public class BookController : ControllerBase
     {
         private readonly IBookService _bookService;
@@ -26,9 +27,6 @@ namespace LibraryMgmt.Controllers
 
         public async Task<IActionResult?> GetBooks()
         {
-            if (!ModelState.IsValid)
-                return BadRequest(OperationalResult<ICollection<BookDto>>.Error("Invalid model state.", ErrorCode.ValidationFailed));
-
             var result = await _bookService.GetBooks();
 
             if (!result.Success)
@@ -44,9 +42,6 @@ namespace LibraryMgmt.Controllers
         [ProducesResponseType(404, Type = typeof(OperationalResult<BookDto>))]
         public async Task<IActionResult> GetBookStatusById(int bookId)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(OperationalResult<Book>.Error("Invalid model state.", ErrorCode.ValidationFailed));
-
             var result = await _bookService.GetBookById(bookId);
 
             if (!result.Success)
@@ -57,6 +52,9 @@ namespace LibraryMgmt.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
+        [ProducesResponseType(200, Type = typeof(OperationalResult<AddBookDto>))]
+        [ProducesResponseType(400, Type = typeof(OperationalResult<AddBookDto>))]
+        [ProducesResponseType(404, Type = typeof(OperationalResult<AddBookDto>))]
         public async Task<IActionResult> AddBook([FromBody] AddBookDto newBook)
         {
             if(newBook == null)

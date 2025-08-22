@@ -13,7 +13,7 @@ namespace LibraryMgmt.Repository
 
         public async Task<ICollection<BookStatus>> GetBookStatuses()
         {
-            return await _context.BookStatuses.ToListAsync();
+            return await _context.BookStatuses.AsNoTracking().ToListAsync();
         }
 
         public async Task<BookStatus> GetBookStatusById(int bookStatusId)
@@ -27,7 +27,7 @@ namespace LibraryMgmt.Repository
 
         public async Task<bool> BookStatusExists(int bookStatusId)
         {
-            return await _context.BookStatuses.AnyAsync(bs => bs.BookStatusId == bookStatusId);
+            return await _context.BookStatuses.AsNoTracking().AnyAsync(bs => bs.BookStatusId == bookStatusId);
         }
 
         public async Task<bool> ReturnBook(BookStatus bookStatus)

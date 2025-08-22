@@ -5,9 +5,10 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace LibraryMgmt.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,User")]
     [Route("api/[controller]")]
     [ApiController]
+    [Produces("application/json")]
     public class StudentController : ControllerBase
     {
         private readonly IStudentService _studentService;
@@ -17,17 +18,11 @@ namespace LibraryMgmt.Controllers
             _studentService = studentService;
         }
 
-        [Authorize(Roles = "Admin")]
         [HttpGet]
-        [ProducesResponseType(200, Type = typeof(OperationalResult<ICollection<StudentDto>>))]
-        [ProducesResponseType(400, Type = typeof(OperationalResult<ICollection<StudentDto>>))]
-        [ProducesResponseType(404, Type = typeof(OperationalResult<ICollection<StudentDto>>))]
-        
-        public async Task<IActionResult> GetStudents()
+        [ProducesResponseType(typeof(OperationalResult<ICollection<StudentDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationalResult<ICollection<StudentDto>>), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<OperationalResult<ICollection<StudentDto>>>> GetStudents()
         {
-            if (!ModelState.IsValid)
-                return BadRequest(OperationalResult<ICollection<StudentDto>>.Error("Invalid model state.", ErrorCode.ValidationFailed));
-
             var result = await _studentService.GetStudents();
 
             if (!result.Success)
@@ -36,16 +31,11 @@ namespace LibraryMgmt.Controllers
             return Ok(result);
         }
 
-        [Authorize(Roles = "Admin,User")]
         [HttpGet("{studentId:int}")]
-        [ProducesResponseType(200, Type = typeof(OperationalResult<StudentDto>))]
-        [ProducesResponseType(400, Type = typeof(OperationalResult<StudentDto>))]
-        [ProducesResponseType(404, Type = typeof(OperationalResult<StudentDto>))]
-        public async Task<IActionResult> GetStudentById(int studentId)
+        [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<OperationalResult<StudentDto>>> GetStudentById(int studentId)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(OperationalResult<StudentDto>.Error("Invalid model state.", ErrorCode.ValidationFailed));
-
             var result = await _studentService.GetStudentById(studentId);
 
             if (!result.Success)
@@ -53,9 +43,12 @@ namespace LibraryMgmt.Controllers
 
             return Ok(result);
         }
+
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        public async Task<IActionResult> AddStudent([FromBody] CreateStudentDto newStudent)
+        [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationalResult<StudentDto>>> AddStudent([FromBody] CreateStudentDto newStudent)
         {
             if (newStudent == null)
             {
@@ -65,9 +58,9 @@ namespace LibraryMgmt.Controllers
             var result = await _studentService.AddStudent(newStudent);
 
             if (!result.Success)
-                return NotFound(OperationalResult<StudentDto>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
+                return BadRequest(OperationalResult<StudentDto>.Error(result.Message, result.Code ?? ErrorCode.ValidationFailed));
 
-            return Ok(result);
+            return CreatedAtAction(nameof(GetStudentById), new { studentId = result.Data?.StudentId }, result);
         }
     }
 }

@@ -10,8 +10,9 @@ using System.Security.Claims;
 
 namespace LibraryMgmt.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,User")]
     [ApiController]
+    [Produces("application/json")]
     [Route("api/[controller]")]
     public class BookStatusController : ControllerBase
     {
@@ -28,9 +29,6 @@ namespace LibraryMgmt.Controllers
         [ProducesResponseType(404, Type = typeof(OperationalResult<ICollection<BookStatusDto>>))]
         public async Task<IActionResult> GetBookStatuses()
         {
-            if (!ModelState.IsValid)
-                return BadRequest(OperationalResult<ICollection<BookStatus>>.Error("Invalid model state.", ErrorCode.ValidationFailed));
-
             var result = await _bookStatusService.GetBookStatuses();
 
             if (!result.Success)
@@ -46,9 +44,6 @@ namespace LibraryMgmt.Controllers
         [ProducesResponseType(404, Type = typeof(OperationalResult<BookStatusDto>))]
         public async Task<IActionResult> GetBookStatusById(int bookStatusId)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(OperationalResult<BookStatus>.Error("Invalid model state.", ErrorCode.ValidationFailed));
-
             var result = await _bookStatusService.GetBookStatusById(bookStatusId);
 
             if (!result.Success)
@@ -91,6 +86,7 @@ namespace LibraryMgmt.Controllers
 
         }
 
+        //Return book method 1: JsonPatchDocument.
         [Authorize(Roles = "Admin,User")]
         [HttpPatch("{id}")]
         [Consumes("application/json-patch+json")]
@@ -115,6 +111,7 @@ namespace LibraryMgmt.Controllers
             return Ok(result);
         }
 
+        //Return book method 2: Update all.
         [Authorize]
         [HttpPatch("{bookId}")]
         [ProducesResponseType(200, Type = typeof(OperationalResult<BookReturnedDto>))]

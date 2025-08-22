@@ -12,12 +12,12 @@ namespace LibraryMgmt.Repository
         }
         public async Task<Student> GetStudentById(int studentId)
         {
-            return await _context.Students.FirstOrDefaultAsync(sd => sd.StudentId == studentId);
+            return await _context.Students.AsNoTracking().FirstOrDefaultAsync(sd => sd.StudentId == studentId);
         }
 
         public async Task<bool> StudentExistsViaEmail(string email)
         {
-            return await _context.Students.AnyAsync(s => s.EmailAddress == email);
+            return await _context.Students.AsNoTracking().AnyAsync(s => s.EmailAddress == email);
         }
 
         public async Task<Student?> AddStudent(Student student)

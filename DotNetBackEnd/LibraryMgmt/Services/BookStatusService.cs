@@ -18,35 +18,53 @@ namespace LibraryMgmt.Services
         private readonly IBookStatusRepository _bookStatusRepository;
         private readonly DataContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<BookService> _logger;
 
-        public BookStatusService(IBookStatusRepository bookSatusRepository, DataContext context, IMapper mapper)
+        public BookStatusService(IBookStatusRepository bookSatusRepository, DataContext context, IMapper mapper, ILogger<BookService> logger)
         {
             _bookStatusRepository = bookSatusRepository;
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<OperationalResult<ICollection<BookStatusDto>>> GetBookStatuses()
         {
+            _logger.LogInformation("Fetching all book statuses...");
+
             var bookStatuses = _mapper.Map<ICollection<BookStatusDto>>(await _bookStatusRepository.GetAllAsync());
 
             if (bookStatuses == null || bookStatuses.Count == 0)
+            {
+                _logger.LogWarning("No book statuses found.");
                 return OperationalResult<ICollection<BookStatusDto>>.Error("No book statuses found.");
+            }
 
+            _logger.LogInformation("Retrieved {Count} book statuses.", bookStatuses.Count);
             return OperationalResult<ICollection<BookStatusDto>>.Ok(bookStatuses);
         }
 
+
         public async Task<OperationalResult<BookStatusDto>> GetBookStatusById(int bookStatusId)
         {
+            _logger.LogInformation("Fetching book status with ID: {Id}", bookStatusId);
+
             var bookStatus = _mapper.Map<BookStatusDto>(await _bookStatusRepository.GetBookStatusById(bookStatusId));
 
             if (bookStatus == null)
+            {
+                _logger.LogWarning("No book status found for ID: {Id}", bookStatusId);
                 return OperationalResult<BookStatusDto>.Error("No book status found.");
+            }
 
+            _logger.LogInformation("Book status retrieved for ID: {Id}", bookStatusId);
             return OperationalResult<BookStatusDto>.Ok(bookStatus);
         }
+
         public async Task<OperationalResult<bool>> CheckoutBookAsync(int bookId, int studentId)
         {
+            _logger.LogInformation("Attempting to checkout book {BookId} for student {StudentId}", bookId, studentId);
+
             var checkoutDate = DateTime.UtcNow;
 
             await using var connection = _context.Database.GetDbConnection();
@@ -70,50 +88,61 @@ namespace LibraryMgmt.Services
             try
             {
                 await command.ExecuteNonQueryAsync();
-
                 var result = (int)returnParam.Value;
 
                 if (result == 1)
                 {
+                    _logger.LogInformation("Checkout successful for book {BookId} and student {StudentId}", bookId, studentId);
                     return OperationalResult<bool>.Ok(true);
                 }
-                else
-                {
-                    return OperationalResult<bool>.Error("No copies available.");
-                }
+
+                _logger.LogWarning("Checkout failed: No copies available for book {BookId}", bookId);
+                return OperationalResult<bool>.Error("No copies available.");
             }
             catch (SqlException ex)
             {
-                switch (ex.Number)
+                _logger.LogError(ex, "SQL error during checkout for book {BookId} and student {StudentId}", bookId, studentId);
+
+                return ex.Number switch
                 {
-                    case 50001:
-                        return OperationalResult<bool>.Error("No available copies of this book.", ErrorCode.ValidationFailed);
-
-                    case 50002:
-                        return OperationalResult<bool>.Error("This student already has this book checked out.", ErrorCode.ValidationFailed);
-
-                    default:
-                        return OperationalResult<bool>.Error("Database error: " + ex.Message, ErrorCode.SaveFailed);
-                }
+                    50001 => OperationalResult<bool>.Error("No available copies of this book.", ErrorCode.ValidationFailed),
+                    50002 => OperationalResult<bool>.Error("This student already has this book checked out.", ErrorCode.ValidationFailed),
+                    _ => OperationalResult<bool>.Error("Database error: " + ex.Message, ErrorCode.SaveFailed)
+                };
             }
         }
 
+
         public async Task<OperationalResult<BookReturnedDto>> ReturnBook(int id, JsonPatchDocument<BookStatus> patchDoc, ModelStateDictionary modelState)
         {
+            _logger.LogInformation("Attempting to return book status with ID: {Id}", id);
+
             var bookStatus = await _bookStatusRepository.GetBookStatusById(id);
             if (bookStatus == null)
+            {
+                _logger.LogWarning("Book status not found for ID: {Id}", id);
                 return OperationalResult<BookReturnedDto>.Error("Book not found.");
+            }
 
             if (patchDoc == null)
+            {
+                _logger.LogWarning("Patch document is null for book status ID: {Id}", id);
                 return OperationalResult<BookReturnedDto>.Error("Invalid patch document.");
+            }
 
             if (bookStatus.DateReturned.HasValue)
+            {
+                _logger.LogWarning("Book status ID {Id} already marked as returned.", id);
                 return OperationalResult<BookReturnedDto>.Error("This book has already been returned.", ErrorCode.ValidationFailed);
+            }
 
             PatchHelper.TryApplyPatch<BookStatus>(patchDoc, bookStatus, modelState);
 
             if (!modelState.IsValid)
+            {
+                _logger.LogWarning("Patch validation failed for book status ID: {Id}", id);
                 return OperationalResult<BookReturnedDto>.Error("Patch validation failed.");
+            }
 
             var saved = await _bookStatusRepository.SaveAsync();
 
@@ -126,23 +155,39 @@ namespace LibraryMgmt.Services
             };
 
             if (!saved)
+            {
+                _logger.LogError("Failed to save return for book status ID: {Id}", id);
                 return OperationalResult<BookReturnedDto>.Error("Failed to save changes.");
+            }
 
+            _logger.LogInformation("Book successfully returned for book status ID: {Id}", id);
             return OperationalResult<BookReturnedDto>.Ok(dto);
         }
 
+
         public async Task<OperationalResult<BookReturnedDto>> ReturnBookByInt(int bookId, string? userEmail)
         {
-            var bookStatus = await _bookStatusRepository.GetBookStatusById(bookId);
-            
-            if (bookStatus == null)
-                return OperationalResult<BookReturnedDto>.Error("No matching checkout found", ErrorCode.NotFound);
+            _logger.LogInformation("Attempting to return book {BookId} for user {Email}", bookId, userEmail);
 
-            if(bookStatus.Student?.EmailAddress != userEmail)
+            var bookStatus = await _bookStatusRepository.GetBookStatusById(bookId);
+
+            if (bookStatus == null)
+            {
+                _logger.LogWarning("No matching checkout found for book {BookId}", bookId);
+                return OperationalResult<BookReturnedDto>.Error("No matching checkout found", ErrorCode.NotFound);
+            }
+
+            if (bookStatus.Student?.EmailAddress != userEmail)
+            {
+                _logger.LogWarning("Book {BookId} is not checked out by user {Email}", bookId, userEmail);
                 return OperationalResult<BookReturnedDto>.Error("This book is not checked out by the current user.", ErrorCode.ValidationFailed);
+            }
 
             if (bookStatus.DateReturned.HasValue)
+            {
+                _logger.LogWarning("Book {BookId} has already been returned.", bookId);
                 return OperationalResult<BookReturnedDto>.Error("This book has already been returned.", ErrorCode.ValidationFailed);
+            }
 
             bookStatus.DateReturned = DateTime.UtcNow;
 
@@ -155,18 +200,32 @@ namespace LibraryMgmt.Services
             };
 
             if (!await _bookStatusRepository.SaveAsync())
+            {
+                _logger.LogError("Failed to save return for book {BookId}", bookId);
                 return OperationalResult<BookReturnedDto>.Error("Something went wrong returning the book.", ErrorCode.SaveFailed);
+            }
 
+            _logger.LogInformation("Book {BookId} successfully returned by user {Email}", bookId, userEmail);
             return OperationalResult<BookReturnedDto>.Ok(dto);
         }
 
+
         private int GeBookStatusBy(int studentId, int bookId)
         {
+            _logger.LogDebug("Fetching book status for student {StudentId} and book {BookId}", studentId, bookId);
+
             var bookStatus = _context.BookStatuses
-                .Where(bs => bs.StudentId == studentId && bs.BookId == bookId && bs.DateReturned == null).FirstOrDefault();
+                .FirstOrDefault(bs => bs.StudentId == studentId && bs.BookId == bookId && bs.DateReturned == null);
 
+            if (bookStatus == null)
+            {
+                _logger.LogWarning("No active book status found for student {StudentId} and book {BookId}", studentId, bookId);
+                return -1;
+            }
+
+            _logger.LogInformation("Found book status ID {StatusId} for student {StudentId} and book {BookId}", bookStatus.BookStatusId, studentId, bookId);
             return bookStatus.BookStatusId;
-
         }
+
     }
 }

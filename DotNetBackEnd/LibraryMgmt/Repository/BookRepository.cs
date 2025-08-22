@@ -13,12 +13,12 @@ namespace LibraryMgmt.Repository
 
         public async Task<Book> GetBookById(int bookId)
         {
-            return await _context.Books.FirstOrDefaultAsync(bs => bs.BookId == bookId);
+            return await _context.Books.AsNoTracking().FirstOrDefaultAsync(bs => bs.BookId == bookId);
         }
 
         public async Task<Book> GetBookByIsbn(string isbn)
         {
-            return await _context.Books.FirstOrDefaultAsync(bs => bs.Isbn == isbn);
+            return await _context.Books.AsNoTracking().FirstOrDefaultAsync(bs => bs.Isbn == isbn);
         }
 
         public async Task<bool> UpdateNoBooks(int bookId, int noCopies)
@@ -37,7 +37,7 @@ namespace LibraryMgmt.Repository
 
         public async Task<bool> BookExists(string isbn)
         {
-            return await _context.Books.AnyAsync(b => b.Isbn == isbn);
+            return await _context.Books.AsNoTracking().AnyAsync(b => b.Isbn == isbn);
         }
 
         public async Task<Book> AddBook(Book book)
