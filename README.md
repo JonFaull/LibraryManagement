@@ -4,7 +4,7 @@ A RESTful Web API built with ASP.NET Core using **Entity Framework Core scaffold
 
 ## 🚀 Technologies Used
 
-- ASP.NET Core 9.0
+- ASP.NET Core 8.0
 - Entity Framework Core (Database-First via Scaffolding)
 - SQL Server
 - AutoMapper
