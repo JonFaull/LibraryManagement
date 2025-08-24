@@ -5,7 +5,6 @@ using LibraryMgmt.DTOs;
 using LibraryMgmt.Models;
 using LibraryMgmt.Repository.Interfaces;
 using LibraryMgmt.Services.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace LibraryMgmt.Services
 {

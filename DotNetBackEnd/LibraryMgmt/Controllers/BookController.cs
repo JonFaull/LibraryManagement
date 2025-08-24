@@ -1,6 +1,5 @@
 ﻿using LibraryMgmt.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using LibraryMgmt.Models;
 using LibraryMgmt.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using LibraryMgmt.Common;
