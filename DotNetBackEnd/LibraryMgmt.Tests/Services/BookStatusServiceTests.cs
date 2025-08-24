@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using LibraryMgmt.Common;
 using LibraryMgmt.DTOs;
 using LibraryMgmt.Models;
 using LibraryMgmt.Repository.Interfaces;
 using LibraryMgmt.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace LibraryMgmt.Tests.Services
@@ -14,13 +16,16 @@ namespace LibraryMgmt.Tests.Services
         private readonly Mock<IBookStatusRepository> _repoMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly BookStatusService _service;
+        private readonly Mock<ILogger<BookStatusService>> _loggerMock;
+
 
         public BookStatusServiceTests()
         {
             _repoMock = new Mock<IBookStatusRepository>();
             _mapperMock = new Mock<IMapper>();
+            _loggerMock = new Mock<ILogger<BookStatusService>>();
             var context = new Mock<Data.DataContext>().Object; // Not used directly in tests
-            _service = new BookStatusService(_repoMock.Object, context, _mapperMock.Object);
+            _service = new BookStatusService(_repoMock.Object, context, _mapperMock.Object, _loggerMock.Object);
         }
 
         [Fact]
@@ -81,36 +86,66 @@ namespace LibraryMgmt.Tests.Services
         [Fact]
         public async Task ReturnBookByInt_ReturnsError_WhenAlreadyReturned()
         {
-            var status = new BookStatus { BookId = 1, DateReturned = DateTime.UtcNow };
 
-            _repoMock.Setup(r => r.GetBookStatusById(1)).ReturnsAsync(status);
+            var bookId = 1;
+            var userEmail = "alice.smith@example.com";
 
-            var result = await _service.ReturnBookByInt(1);
+            var status = new BookStatus
+            {
+                BookId = bookId,
+                Book = new Book { Title = "Test Book" },
+                Student = new Student
+                {
+                    FirstName = "Alice",
+                    LastName = "Smith",
+                    EmailAddress = userEmail
+                },
+                DateReturned = DateTime.UtcNow
+            };
+
+            _repoMock.Setup(r => r.GetBookStatusById(bookId)).ReturnsAsync(status);
+
+            var result = await _service.ReturnBookByInt(bookId, userEmail);
 
             Assert.False(result.Success);
             Assert.Equal("This book has already been returned.", result.Message);
+            Assert.Equal(ErrorCode.ValidationFailed, result.Code);
         }
+
 
         [Fact]
         public async Task ReturnBookByInt_ReturnsSuccess_WhenValid()
         {
+            // Arrange
+            var bookId = 1;
+            var userEmail = "alice.smith@example.com";
+
             var status = new BookStatus
             {
-                BookId = 1,
+                BookId = bookId,
                 Book = new Book { Title = "Test Book" },
-                Student = new Student { FirstName = "Alice", LastName = "Smith" },
+                Student = new Student
+                {
+                    FirstName = "Alice",
+                    LastName = "Smith",
+                    EmailAddress = userEmail
+                },
                 DateReturned = null
             };
 
-            _repoMock.Setup(r => r.GetBookStatusById(1)).ReturnsAsync(status);
+            _repoMock.Setup(r => r.GetBookStatusById(bookId)).ReturnsAsync(status);
             _repoMock.Setup(r => r.SaveAsync()).ReturnsAsync(true);
 
-            var result = await _service.ReturnBookByInt(1);
+            // Act
+            var result = await _service.ReturnBookByInt(bookId, userEmail);
 
+            // Assert
             Assert.True(result.Success);
             Assert.Equal("Test Book", result.Data.Title);
             Assert.Equal("Alice Smith", result.Data.StudentName);
+            Assert.True(result.Data.DateReturned <= DateTime.UtcNow); // Optional: check timestamp
         }
+
 
         [Fact]
         public async Task ReturnBook_ReturnsError_WhenPatchInvalid()

@@ -7,6 +7,7 @@ using LibraryMgmt.Services.Interfaces;
 using LibraryMgmt.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using LibraryMgmt.Common;
 
 namespace LibraryMgmt.Controllers
 {
@@ -32,7 +33,7 @@ namespace LibraryMgmt.Controllers
             var result = await _bookStatusService.GetBookStatuses();
 
             if (!result.Success)
-                return NotFound(OperationalResult<ICollection<BookStatus>>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
+                return NotFound(OperationalResult<ICollection<BookStatusDto>>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
 
             return Ok(result);
         }
@@ -47,7 +48,7 @@ namespace LibraryMgmt.Controllers
             var result = await _bookStatusService.GetBookStatusById(bookStatusId);
 
             if (!result.Success)
-                return NotFound(OperationalResult<BookStatus>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
+                return NotFound(OperationalResult<BookStatusDto>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
 
             return Ok(result);
         }
@@ -86,19 +87,19 @@ namespace LibraryMgmt.Controllers
 
         }
 
-        //Return book method 1: JsonPatchDocument.
+        //Update: Return book method 1: JsonPatchDocument.
         [Authorize(Roles = "Admin,User")]
-        [HttpPatch("ReturnBook{id}")]
+        [HttpPatch("ReturnBookByJsonPatchDocument/{bookStatusId}")]
         [Consumes("application/json-patch+json")]
-        [SwaggerRequestExample(typeof(JsonPatchDocument<BookStatus>), typeof(JsonPatchExampleFilter))]
+        [SwaggerRequestExample(typeof(JsonPatchDocument<BookStatusDto>), typeof(JsonPatchExampleFilter))]
         [ProducesResponseType(200, Type = typeof(OperationalResult<BookReturnedDto>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<BookReturnedDto>))]
         [ProducesResponseType(404, Type = typeof(OperationalResult<BookReturnedDto>))]
         [ProducesResponseType(500, Type = typeof(OperationalResult<BookReturnedDto>))]
 
-        public async Task<IActionResult> ReturnBook(int id, [FromBody] JsonPatchDocument<BookStatus> patchDoc)
+        public async Task<IActionResult> ReturnBook(int bookStatusId, [FromBody] JsonPatchDocument<BookStatus> patchDoc)
         {
-            var result = await _bookStatusService.ReturnBook(id, patchDoc, ModelState);
+            var result = await _bookStatusService.ReturnBook(bookStatusId, patchDoc, ModelState);
 
             if (!result.Success)
             {
@@ -111,18 +112,18 @@ namespace LibraryMgmt.Controllers
             return Ok(result);
         }
 
-        //Return book method 2: Update all.
+        //Update Return book method 2: Update all.
         [Authorize]
-        [HttpPatch("ReturnBook{bookId}")]
+        [HttpPatch("ReturnBookByReplace/{bookStatusId}")]
         [ProducesResponseType(200, Type = typeof(OperationalResult<BookReturnedDto>))]
         [ProducesResponseType(400, Type = typeof(OperationalResult<BookReturnedDto>))]
         [ProducesResponseType(404, Type = typeof(OperationalResult<BookReturnedDto>))]
         [ProducesResponseType(500, Type = typeof(OperationalResult<BookReturnedDto>))]
-        public async Task<IActionResult> ReturnBookByInt(int bookId)
+        public async Task<IActionResult> ReturnBookByInt(int bookStatusId)
         {
             var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
 
-            var result = await _bookStatusService.ReturnBookByInt(bookId, userEmail);
+            var result = await _bookStatusService.ReturnBookByInt(bookStatusId, userEmail);
 
             if (!result.Success)
             {

@@ -2,7 +2,7 @@
 using AutoMapper;
 using LibraryMgmt.DTOs;
 
-namespace LibraryMgmt.Helpers
+namespace LibraryMgmt.Mapping
 {
     public class MappingProfile : Profile
     {

@@ -2,6 +2,7 @@
 using LibraryMgmt.DTOs;
 using LibraryMgmt.Models;
 using LibraryMgmt.Services.Interfaces;
+using LibraryMgmt.Common;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -75,7 +76,7 @@ namespace LibraryMgmt.Tests.Controllers
             var result = await _controller.GetBookStatusById(1);
 
             var notFound = Assert.IsType<NotFoundObjectResult>(result);
-            var returned = Assert.IsAssignableFrom<OperationalResult<Book>>(notFound.Value);
+            var returned = Assert.IsAssignableFrom<OperationalResult<BookDto>>(notFound.Value);
             Assert.False(returned.Success);
             Assert.Equal("Book not found.", returned.Message);
         }
@@ -83,10 +84,24 @@ namespace LibraryMgmt.Tests.Controllers
         [Fact]
         public async Task AddBook_ReturnsOk_WhenAddedSuccessfully()
         {
-            var newBook = new BookDto { BookId = 2, Title = "New Book" };
-            var resultData = OperationalResult<BookDto>.Ok(newBook);
+            var newBook = new AddBookDto
+            {
+                Title = "New Book",
+                Author = "Author",
+                Isbn = "123",
+                NoCopies = 1
+            };
 
-            _serviceMock.Setup(s => s.AddBook(newBook)).ReturnsAsync(resultData);
+            var resultData = OperationalResult<BookDto>.Ok(new BookDto
+            {
+                BookId = 1,
+                Title = "New Book",
+                Author = "Author",
+                Isbn = "123",
+                NoCopies = 1
+            });
+
+            _serviceMock.Setup(s => s.AddBook(It.IsAny<AddBookDto>())).ReturnsAsync(resultData);
 
             var result = await _controller.AddBook(newBook);
 
@@ -95,6 +110,7 @@ namespace LibraryMgmt.Tests.Controllers
             Assert.True(returned.Success);
             Assert.Equal("New Book", returned.Data.Title);
         }
+
 
         [Fact]
         public async Task AddBook_ReturnsBadRequest_WhenNull()
@@ -110,17 +126,27 @@ namespace LibraryMgmt.Tests.Controllers
         [Fact]
         public async Task AddBook_ReturnsNotFound_WhenServiceFails()
         {
-            var newBook = new BookDto { BookId = 3, Title = "Fail Book" };
-            var resultData = OperationalResult<BookDto>.Error("Failed to add book.");
+            // Arrange
+            var newBook = new AddBookDto { Title = "Test Book", Author = "Author Name" };
+            var resultData = OperationalResult<BookDto>.Error("Book not found", ErrorCode.NotFound);
 
-            _serviceMock.Setup(s => s.AddBook(newBook)).ReturnsAsync(resultData);
+            _serviceMock
+                .Setup(s => s.AddBook(newBook))
+                .ReturnsAsync(resultData);
 
-            var result = await _controller.AddBook(newBook);
+            var controller = new BookController(_serviceMock.Object);
 
+            // Act
+            var result = await controller.AddBook(newBook);
+
+            // Assert
             var notFound = Assert.IsType<NotFoundObjectResult>(result);
             var returned = Assert.IsAssignableFrom<OperationalResult<BookDto>>(notFound.Value);
             Assert.False(returned.Success);
-            Assert.Equal("Failed to add book.", returned.Message);
+            Assert.Equal("Book not found", returned.Message);
+            Assert.Equal(ErrorCode.NotFound, returned.Code);
         }
+
+
     }
 }

@@ -10,6 +10,7 @@ using AutoMapper;
 using LibraryMgmt.DTOs;
 using System.Data;
 using Microsoft.Data.SqlClient;
+using LibraryMgmt.Common;
 
 namespace LibraryMgmt.Services
 {
@@ -18,11 +19,11 @@ namespace LibraryMgmt.Services
         private readonly IBookStatusRepository _bookStatusRepository;
         private readonly DataContext _context;
         private readonly IMapper _mapper;
-        private readonly ILogger<BookService> _logger;
+        private readonly ILogger<BookStatusService> _logger;
 
-        public BookStatusService(IBookStatusRepository bookSatusRepository, DataContext context, IMapper mapper, ILogger<BookService> logger)
+        public BookStatusService(IBookStatusRepository bookStatusRepository, DataContext context, IMapper mapper, ILogger<BookStatusService> logger)
         {
-            _bookStatusRepository = bookSatusRepository;
+            _bookStatusRepository = bookStatusRepository;
             _context = context;
             _mapper = mapper;
             _logger = logger;
@@ -136,7 +137,15 @@ namespace LibraryMgmt.Services
                 return OperationalResult<BookReturnedDto>.Error("This book has already been returned.", ErrorCode.ValidationFailed);
             }
 
-            PatchHelper.TryApplyPatch<BookStatus>(patchDoc, bookStatus, modelState);
+            try
+            {
+                PatchHelper.TryApplyPatch<BookStatus>(patchDoc, bookStatus, modelState);
+            } catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error applying patch document for book status ID: {Id}", id);
+                return OperationalResult<BookReturnedDto>.Error("Error applying patch document.");
+            }
+
 
             if (!modelState.IsValid)
             {
@@ -177,7 +186,7 @@ namespace LibraryMgmt.Services
                 return OperationalResult<BookReturnedDto>.Error("No matching checkout found", ErrorCode.NotFound);
             }
 
-            if (bookStatus.Student?.EmailAddress != userEmail)
+            if (bookStatus.Student == null || bookStatus.Student.EmailAddress != userEmail)
             {
                 _logger.LogWarning("Book {BookId} is not checked out by user {Email}", bookId, userEmail);
                 return OperationalResult<BookReturnedDto>.Error("This book is not checked out by the current user.", ErrorCode.ValidationFailed);
@@ -210,7 +219,7 @@ namespace LibraryMgmt.Services
         }
 
 
-        private int GeBookStatusBy(int studentId, int bookId)
+        private int GetBookStatusBy(int studentId, int bookId)
         {
             _logger.LogDebug("Fetching book status for student {StudentId} and book {BookId}", studentId, bookId);
 

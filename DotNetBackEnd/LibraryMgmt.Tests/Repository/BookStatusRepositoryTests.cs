@@ -8,7 +8,6 @@ namespace LibraryMgmt.Tests.Repository
 {
     public class BookStatusRepositoryTests
     {
-        // Helper method to create a fresh in-memory database context
         private DataContext GetInMemoryContext()
         {
             var options = new DbContextOptionsBuilder<DataContext>()
@@ -21,7 +20,6 @@ namespace LibraryMgmt.Tests.Repository
         [Fact]
         public async Task GetBookStatuses_ReturnsAllStatuses()
         {
-            // Arrange
             using var context = GetInMemoryContext();
             context.BookStatuses.AddRange(
                 new BookStatus { BookStatusId = 1 },
@@ -31,17 +29,14 @@ namespace LibraryMgmt.Tests.Repository
 
             var repo = new BookStatusRepository(context);
 
-            // Act
             var result = await repo.GetBookStatuses();
 
-            // Assert
             Assert.Equal(2, result.Count);
         }
 
         [Fact]
         public async Task GetBookStatusById_ReturnsCorrectStatusWithIncludes()
         {
-            // Arrange
             using var context = GetInMemoryContext();
             var book = new Book { BookId = 1, Title = "Test Book" };
             var student = new Student { StudentId = 1, FirstName = "John", LastName = "Murphy", CourseId = 1, EmailAddress = "john.murphy@gmail.com" };
@@ -62,10 +57,8 @@ namespace LibraryMgmt.Tests.Repository
 
             var repo = new BookStatusRepository(context);
 
-            // Act
             var result = await repo.GetBookStatusById(1);
 
-            // Assert
             Assert.NotNull(result);
             Assert.Equal("Test Book", result.Book.Title);
             Assert.Equal("John", result.Student.FirstName);

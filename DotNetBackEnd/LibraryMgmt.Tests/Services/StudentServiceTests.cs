@@ -3,6 +3,7 @@ using LibraryMgmt.DTOs;
 using LibraryMgmt.Models;
 using LibraryMgmt.Repository.Interfaces;
 using LibraryMgmt.Services;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace LibraryMgmt.Tests.Services
@@ -11,14 +12,16 @@ namespace LibraryMgmt.Tests.Services
     {
         private readonly Mock<IStudentRepository> _repoMock;
         private readonly Mock<IMapper> _mapperMock;
+        private readonly Mock<ILogger<StudentService>> _loggerMock;
         private readonly StudentService _service;
 
         public StudentServiceTests()
         {
             _repoMock = new Mock<IStudentRepository>();
             _mapperMock = new Mock<IMapper>();
-            var context = new Mock<LibraryMgmt.Data.DataContext>().Object; 
-            _service = new StudentService(_repoMock.Object, context, _mapperMock.Object);
+            _loggerMock = new Mock<ILogger<StudentService>>();
+            var context = new Mock<Data.DataContext>().Object; 
+            _service = new StudentService(_repoMock.Object, context, _mapperMock.Object, _loggerMock.Object);
         }
 
         [Fact]
@@ -47,7 +50,7 @@ namespace LibraryMgmt.Tests.Services
             var result = await _service.GetStudents();
 
             Assert.False(result.Success);
-            Assert.Equal("No books found.", result.Message);
+            Assert.Equal("No students found.", result.Message);
         }
 
         [Fact]

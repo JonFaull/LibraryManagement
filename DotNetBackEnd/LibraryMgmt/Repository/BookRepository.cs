@@ -25,13 +25,9 @@ namespace LibraryMgmt.Repository
         {
             var book = await _context.Books.FirstOrDefaultAsync(bs => bs.BookId == bookId);
 
-            if(book == null)
-            {
-                return false;
-            }
+            if (book == null) return false;
 
-            book.NoCopies = book.NoCopies + noCopies;
-
+            book.NoCopies += noCopies;
             return await SaveAsync();
         }
 
@@ -43,13 +39,9 @@ namespace LibraryMgmt.Repository
         public async Task<Book> AddBook(Book book)
         {
             _context.Books.Add(book);
-
-            var success = await SaveAsync();
-            if (!success)
-            {
-                return null; 
-            }
-            return await GetBookByIsbn(book.Isbn);
+            var saved = await SaveAsync();
+            return saved ? await GetBookByIsbn(book.Isbn) : null;
         }
+
     }
 }

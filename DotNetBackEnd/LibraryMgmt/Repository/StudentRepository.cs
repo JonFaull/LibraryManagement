@@ -23,7 +23,8 @@ namespace LibraryMgmt.Repository
         public async Task<Student?> AddStudent(Student student)
         {
             _context.Students.Add(student);
-            return await SaveAsync() ? student : null;
+            var saved = await SaveAsync();
+            return saved ? student : null;
         }
     }
 }

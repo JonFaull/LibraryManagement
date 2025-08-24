@@ -4,6 +4,7 @@ using LibraryMgmt.Models;
 using LibraryMgmt.Repository.Interfaces;
 using LibraryMgmt.Services;
 using LibraryMgmt.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace LibraryMgmt.Tests.Services
@@ -13,12 +14,14 @@ namespace LibraryMgmt.Tests.Services
         private readonly Mock<IBookRepository> _bookRepoMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly IBookService _bookService;
+        private readonly Mock<ILogger<BookService>> _loggerMock;
 
         public BookServiceTests()
         {
             _bookRepoMock = new Mock<IBookRepository>();
             _mapperMock = new Mock<IMapper>();
-            _bookService = new BookService(_bookRepoMock.Object, null!, _mapperMock.Object);
+            _loggerMock = new Mock<ILogger<BookService>>();
+            _bookService = new BookService(_bookRepoMock.Object, null!, _mapperMock.Object, _loggerMock.Object);
         }
 
         [Fact]
@@ -81,7 +84,7 @@ namespace LibraryMgmt.Tests.Services
         {
             var existingBook = new Book { BookId = 1, Isbn = "123", NoCopies = 2 };
             var updatedBook = new Book { BookId = 1, Isbn = "123", NoCopies = 5 };
-            var bookDto = new BookDto { BookId = 1, Isbn = "123", NoCopies = 3 };
+            var bookDto = new AddBookDto {Isbn = "123", NoCopies = 3 };
 
             _bookRepoMock.Setup(r => r.GetBookByIsbn("123")).ReturnsAsync(existingBook);
             _bookRepoMock.Setup(r => r.UpdateNoBooks(1, 3)).ReturnsAsync(true);
@@ -97,15 +100,16 @@ namespace LibraryMgmt.Tests.Services
         [Fact]
         public async Task AddBook_AddsNewBook_WhenIsbnNotExists()
         {
-            var bookDto = new BookDto { BookId = 2, Isbn = "456", NoCopies = 1 };
+            var addBookDto = new AddBookDto { Isbn = "456", NoCopies = 1 };
             var newBook = new Book { BookId = 2, Isbn = "456", NoCopies = 1 };
+            var bookDto = new BookDto { BookId = 2, Isbn = "456", NoCopies = 1 };
 
             _bookRepoMock.Setup(r => r.GetBookByIsbn("456")).ReturnsAsync((Book)null!);
-            _mapperMock.Setup(m => m.Map<Book>(bookDto)).Returns(newBook);
+            _mapperMock.Setup(m => m.Map<Book>(addBookDto)).Returns(newBook);
             _bookRepoMock.Setup(r => r.AddBook(newBook)).ReturnsAsync(newBook);
             _mapperMock.Setup(m => m.Map<BookDto>(newBook)).Returns(bookDto);
 
-            var result = await _bookService.AddBook(bookDto);
+            var result = await _bookService.AddBook(addBookDto);
 
             Assert.True(result.Success);
             Assert.Equal("456", result.Data.Isbn);
@@ -115,7 +119,7 @@ namespace LibraryMgmt.Tests.Services
         public async Task AddBook_ReturnsError_WhenUpdateFails()
         {
             var existingBook = new Book { BookId = 1, Isbn = "123", NoCopies = 2 };
-            var bookDto = new BookDto { BookId = 1, Isbn = "123", NoCopies = 3 };
+            var bookDto = new AddBookDto { Isbn = "123", NoCopies = 3 };
 
             _bookRepoMock.Setup(r => r.GetBookByIsbn("123")).ReturnsAsync(existingBook);
             _bookRepoMock.Setup(r => r.UpdateNoBooks(1, 3)).ReturnsAsync(false);
@@ -129,7 +133,7 @@ namespace LibraryMgmt.Tests.Services
         [Fact]
         public async Task AddBook_ReturnsError_WhenAddFails()
         {
-            var bookDto = new BookDto { BookId = 2, Isbn = "789", NoCopies = 1 };
+            var bookDto = new AddBookDto { Isbn = "789", NoCopies = 1 };
             var book = new Book { BookId = 2, Isbn = "789", NoCopies = 1 };
 
             _bookRepoMock.Setup(r => r.GetBookByIsbn("789")).ReturnsAsync((Book)null!);

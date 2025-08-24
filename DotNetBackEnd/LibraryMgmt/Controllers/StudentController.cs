@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using LibraryMgmt.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using LibraryMgmt.Common;
 
 namespace LibraryMgmt.Controllers
 {
@@ -21,7 +22,8 @@ namespace LibraryMgmt.Controllers
         [HttpGet("GetStudents")]
         [ProducesResponseType(typeof(OperationalResult<ICollection<StudentDto>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(OperationalResult<ICollection<StudentDto>>), StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<OperationalResult<ICollection<StudentDto>>>> GetStudents()
+        public async Task<IActionResult> GetStudents()
+
         {
             var result = await _studentService.GetStudents();
 
@@ -31,15 +33,15 @@ namespace LibraryMgmt.Controllers
             return Ok(result);
         }
 
-        [HttpGet("GetStudentsById{studentId:int}")]
+        [HttpGet("GetStudent/{studentId}")]
         [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<OperationalResult<StudentDto>>> GetStudentById(int studentId)
+        public async Task<IActionResult> GetStudentById(int studentId)
         {
             var result = await _studentService.GetStudentById(studentId);
 
             if (!result.Success)
-                return NotFound(OperationalResult<StudentDto>.Error(result.Message, result.Code ?? ErrorCode.NotFound));
+                return NotFound(result);
 
             return Ok(result);
         }
@@ -48,7 +50,9 @@ namespace LibraryMgmt.Controllers
         [HttpPost("AddStudent")]
         [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<OperationalResult<StudentDto>>> AddStudent([FromBody] CreateStudentDto newStudent)
+        [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(OperationalResult<StudentDto>), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> AddStudent([FromBody] CreateStudentDto newStudent)
         {
             if (newStudent == null)
             {
@@ -58,9 +62,24 @@ namespace LibraryMgmt.Controllers
             var result = await _studentService.AddStudent(newStudent);
 
             if (!result.Success)
-                return BadRequest(OperationalResult<StudentDto>.Error(result.Message, result.Code ?? ErrorCode.ValidationFailed));
+            {
+                return result.Code switch
+                {
+                    ErrorCode.NotFound => NotFound(OperationalResult<StudentDto>.Error(result.Message, ErrorCode.NotFound)),
+                    ErrorCode.ValidationFailed => BadRequest(OperationalResult<StudentDto>.Error(result.Message, ErrorCode.ValidationFailed)),
+                    ErrorCode.SaveFailed => StatusCode(500, OperationalResult<StudentDto>.Error(result.Message, ErrorCode.SaveFailed)),
+                    _ => StatusCode(500, OperationalResult<StudentDto>.Error("Unexpected error", ErrorCode.Unknown))
+                };
+            }
 
-            return CreatedAtAction(nameof(GetStudentById), new { studentId = result.Data?.StudentId }, result);
+            return CreatedAtAction(
+                nameof(GetStudentById),
+                new { studentId = result.Data?.StudentId },
+                result
+            );
         }
+
+
+
     }
 }

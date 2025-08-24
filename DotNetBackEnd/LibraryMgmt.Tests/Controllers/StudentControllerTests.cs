@@ -1,6 +1,7 @@
 ﻿using LibraryMgmt.Controllers;
 using LibraryMgmt.DTOs;
 using LibraryMgmt.Services.Interfaces;
+using LibraryMgmt.Common;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -80,7 +81,7 @@ namespace LibraryMgmt.Tests.Controllers
         }
 
         [Fact]
-        public async Task AddStudent_ReturnsOk_WhenSuccessful()
+        public async Task AddStudent_ReturnsCreated_WhenSuccessful()
         {
             var newStudent = new CreateStudentDto { FirstName = "Charlie", EmailAddress = "charlie@example.com" };
             var studentDto = new StudentDto { StudentId = 2, FirstName = "Charlie" };
@@ -90,11 +91,13 @@ namespace LibraryMgmt.Tests.Controllers
 
             var result = await _controller.AddStudent(newStudent);
 
-            var ok = Assert.IsType<OkObjectResult>(result);
-            var returned = Assert.IsAssignableFrom<OperationalResult<StudentDto>>(ok.Value);
+            var created = Assert.IsType<CreatedAtActionResult>(result);
+            var returned = Assert.IsAssignableFrom<OperationalResult<StudentDto>>(created.Value);
             Assert.True(returned.Success);
             Assert.Equal("Charlie", returned.Data.FirstName);
+            Assert.Equal(2, returned.Data.StudentId);
         }
+
 
         [Fact]
         public async Task AddStudent_ReturnsBadRequest_WhenNull()
@@ -111,7 +114,7 @@ namespace LibraryMgmt.Tests.Controllers
         public async Task AddStudent_ReturnsNotFound_WhenServiceFails()
         {
             var newStudent = new CreateStudentDto { FirstName = "Dave", EmailAddress = "dave@example.com" };
-            var resultData = OperationalResult<StudentDto>.Error("Failed to add student.");
+            var resultData = OperationalResult<StudentDto>.Error("Failed to add student.", ErrorCode.NotFound);
 
             _serviceMock.Setup(s => s.AddStudent(newStudent)).ReturnsAsync(resultData);
 

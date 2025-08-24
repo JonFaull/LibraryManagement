@@ -1,4 +1,5 @@
-﻿using LibraryMgmt.DTOs;
+﻿using LibraryMgmt.Common;
+using LibraryMgmt.DTOs;
 
 namespace LibraryMgmt.Services.Interfaces
 {

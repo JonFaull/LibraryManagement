@@ -8,12 +8,16 @@ using LibraryMgmt.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Diagnostics;
+using LibraryMgmt.Mapping;
+using LibraryMgmt.Common;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
 
@@ -112,6 +116,22 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseExceptionHandler("/error");
+
+app.Map("/error", (HttpContext context) =>
+{
+    var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
+    var exception = exceptionFeature?.Error;
+
+    var result = OperationalResult<object>.Error(
+        "An unexpected error occurred.",
+        ErrorCode.InternalServerError
+    );
+
+    return Results.Json(result, statusCode: StatusCodes.Status500InternalServerError);
+});
+
 
 app.UseCors(allowedOrigins);
 app.UseHttpsRedirection();
