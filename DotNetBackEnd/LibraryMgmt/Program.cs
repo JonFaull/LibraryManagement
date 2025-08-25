@@ -108,6 +108,7 @@ builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<IGlobalExceptionHandler, GlobalExceptionHandler>();
 
 var app = builder.Build();
 
@@ -117,19 +118,20 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseExceptionHandler("/error");
-
-app.Map("/error", (HttpContext context) =>
+app.UseExceptionHandler(errorApp =>
 {
-    var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
-    var exception = exceptionFeature?.Error;
+    errorApp.Run(async context =>
+    {
+        var exceptionHandler = context.RequestServices.GetRequiredService<IGlobalExceptionHandler>();
+        var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
+        var exception = exceptionFeature?.Error;
 
-    var result = OperationalResult<object>.Error(
-        "An unexpected error occurred.",
-        ErrorCode.InternalServerError
-    );
+        var result = exceptionHandler.Handle(exception);
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
 
-    return Results.Json(result, statusCode: StatusCodes.Status500InternalServerError);
+        await result.ExecuteAsync(context);
+    });
 });
 
 
@@ -142,3 +144,9 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+
+namespace LibraryMgmt
+{
+    public partial class Program { }
+}

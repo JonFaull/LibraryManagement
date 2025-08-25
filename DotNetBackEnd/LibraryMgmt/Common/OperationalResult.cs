@@ -12,10 +12,12 @@
 
     public class OperationalResult<T>
     {
-        public bool Success { get; }
-        public string Message { get; }
-        public T Data { get; }
-        public ErrorCode? Code { get; }
+        public bool Success { get; set; }
+        public string Message { get; set; }
+        public T Data { get; set; }
+        public ErrorCode? Code { get; set; }
+
+        public OperationalResult() { }
 
         private OperationalResult(bool success, string message, T data = default, ErrorCode? code = null)
         {

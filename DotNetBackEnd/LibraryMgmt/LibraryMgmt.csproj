@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>f69b0253-771c-4359-bfe6-2d9e845459c6</UserSecretsId>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo> <!-- Added to prevent duplicate attributes -->
+    <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
 
   <ItemGroup>
